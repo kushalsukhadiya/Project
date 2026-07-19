@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const recyclerController_1 = require("../controllers/recyclerController");
+const auth_1 = require("../middleware/auth");
+const role_1 = require("../middleware/role");
+const router = (0, express_1.Router)();
+router.use(auth_1.authenticateToken);
+router.use((0, role_1.authorizeRoles)(['recycler']));
+router.get('/shipments', recyclerController_1.listShipments);
+router.put('/shipments/:id/receive', recyclerController_1.confirmReceipt);
+router.put('/shipments/:id/recycle', recyclerController_1.updateRecyclingStatus);
+router.get('/stats', recyclerController_1.getRecyclerStats);
+exports.default = router;

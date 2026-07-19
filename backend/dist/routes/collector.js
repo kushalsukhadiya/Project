@@ -1,0 +1,17 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const collectorController_1 = require("../controllers/collectorController");
+const auth_1 = require("../middleware/auth");
+const role_1 = require("../middleware/role");
+const upload_1 = require("../middleware/upload");
+const router = (0, express_1.Router)();
+router.use(auth_1.authenticateToken);
+router.use((0, role_1.authorizeRoles)(['collector']));
+router.put('/availability', collectorController_1.toggleAvailability);
+router.get('/jobs/pending', collectorController_1.listPendingJobs);
+router.put('/jobs/:id/accept', collectorController_1.acceptJob);
+router.put('/jobs/:id/reject', collectorController_1.rejectJob);
+router.put('/jobs/:id/pickup', upload_1.upload.single('pickupProofImage'), collectorController_1.pickupJob);
+router.get('/stats', collectorController_1.getCollectorStats);
+exports.default = router;
