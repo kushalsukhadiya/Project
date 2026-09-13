@@ -3,7 +3,7 @@ export interface User {
   _id?: string;
   name: string;
   email: string;
-  role: 'citizen' | 'collector' | 'recycler' | 'admin';
+  role: 'citizen' | 'collector' | 'recycler' | 'admin' | 'municipal';
   profilePicture: string;
   phoneNumber: string;
   address: string;
@@ -27,7 +27,7 @@ export interface User {
 }
 
 export interface RequestHistory {
-  status: 'pending' | 'accepted' | 'picked_up' | 'received' | 'recycled' | 'cancelled';
+  status: 'pending' | 'reminder_sent' | 'assigned_municipality' | 'escalated' | 'assigned_ngo' | 'in_progress' | 'completed' | 'verified' | 'closed' | 'rejected' | 'duplicate' | 'accepted' | 'picked_up' | 'received' | 'recycled' | 'cancelled';
   updatedAt: string;
   updatedBy: string | User;
 }
@@ -44,7 +44,7 @@ export interface PlasticRequest {
     address: string;
   };
   images: string[];
-  status: 'pending' | 'accepted' | 'picked_up' | 'received' | 'recycled' | 'cancelled';
+  status: 'pending' | 'reminder_sent' | 'assigned_municipality' | 'escalated' | 'assigned_ngo' | 'in_progress' | 'completed' | 'verified' | 'closed' | 'rejected' | 'duplicate' | 'accepted' | 'picked_up' | 'received' | 'recycled' | 'cancelled';
   collector?: User;
   recyclingCenter?: User;
   pickupProofImage?: string;
@@ -57,6 +57,23 @@ export interface PlasticRequest {
     pointsToEarn: number;
     co2ReductionKg: number;
   };
+
+  // New SLA Escalation Fields
+  assignedTo?: string;
+  assignedOrganizationType?: 'municipality' | 'ngo';
+  assignedAt?: string;
+  acceptedAt?: string;
+  reminderSentAt?: string;
+  escalatedAt?: string;
+  completedAt?: string;
+  verifiedAt?: string;
+  slaDeadline?: string;
+  reminderDeadline?: string;
+  beforeImage?: string;
+  afterImage?: string;
+  adminRemarks?: string;
+  claimedBy?: string;
+  claimTimestamp?: string;
 }
 
 export interface Notification {

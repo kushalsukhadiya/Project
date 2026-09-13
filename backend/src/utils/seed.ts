@@ -83,6 +83,23 @@ export const seedDatabase = async () => {
       profilePicture: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&h=150&q=80'
     });
 
+    const municipal = await User.create({
+      name: 'Municipal Officer',
+      email: 'municipal@ecocycle.com',
+      password: hashedPassword,
+      role: 'municipal',
+      phoneNumber: '9222222222',
+      address: 'Municipal Corporation Greater Mumbai (MCGM) Office',
+      city: 'Mumbai',
+      area: 'Fort',
+      collectorDetails: {
+        availability: true,
+        earnings: 1500,
+        completedJobsToday: 3
+      },
+      profilePicture: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=150&h=150&q=80'
+    });
+
     // Create a secondary citizen for leaderboard variety
     const citizen2 = await User.create({
       name: 'Sunita Rao',
@@ -142,10 +159,12 @@ export const seedDatabase = async () => {
       },
       images: ['https://images.unsplash.com/photo-1618477388954-7852f32655ec?auto=format&fit=crop&w=600&q=80'],
       status: 'pending',
+      slaDeadline: new Date(Date.now() + 48 * 3600000),
+      assignedOrganizationType: 'municipality',
       history: [{ status: 'pending', updatedBy: citizen._id, updatedAt: new Date() }]
     });
 
-    // 2. Accepted Request (Collector assigned, on the way)
+    // 2. Assigned to NGO (NGO claimed, on the way)
     const requestAccepted = await PlasticRequest.create({
       citizen: citizen2._id,
       wasteCategory: 'Food Packaging',
@@ -157,15 +176,21 @@ export const seedDatabase = async () => {
         address: 'Marol Pipeline, Andheri East, Mumbai, 400059'
       },
       images: ['https://images.unsplash.com/photo-1526951914846-7a95ebd693f9?auto=format&fit=crop&w=600&q=80'],
-      status: 'accepted',
+      status: 'assigned_ngo',
+      assignedTo: collector._id,
+      assignedOrganizationType: 'ngo',
+      assignedAt: new Date(Date.now() - 1 * 3600000),
+      acceptedAt: new Date(Date.now() - 1 * 3600000),
+      claimedBy: collector._id,
+      claimTimestamp: new Date(Date.now() - 1 * 3600000),
       collector: collector._id,
       history: [
         { status: 'pending', updatedBy: citizen2._id, updatedAt: new Date(Date.now() - 6 * 3600000) },
-        { status: 'accepted', updatedBy: collector._id, updatedAt: new Date(Date.now() - 1 * 3600000) }
+        { status: 'assigned_ngo', updatedBy: collector._id, updatedAt: new Date(Date.now() - 1 * 3600000) }
       ]
     });
 
-    // 3. Picked Up Request (Collector uploaded proof, waiting for Recycler verification)
+    // 3. In Progress (NGO performing cleanup)
     const requestPickedUp = await PlasticRequest.create({
       citizen: citizen._id,
       wasteCategory: 'PET Bottles',
@@ -177,18 +202,24 @@ export const seedDatabase = async () => {
         address: 'Worli Koliwada, Worli, Mumbai, 400030'
       },
       images: ['https://images.unsplash.com/photo-1595278069441-2cf29f8db310?auto=format&fit=crop&w=600&q=80'],
-      status: 'picked_up',
+      status: 'in_progress',
+      assignedTo: collector._id,
+      assignedOrganizationType: 'ngo',
+      assignedAt: new Date(Date.now() - 10 * 3600000),
+      acceptedAt: new Date(Date.now() - 10 * 3600000),
+      claimedBy: collector._id,
+      claimTimestamp: new Date(Date.now() - 10 * 3600000),
       collector: collector._id,
       recyclingCenter: recycler._id,
       pickupProofImage: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=600&q=80',
       history: [
         { status: 'pending', updatedBy: citizen._id, updatedAt: new Date(Date.now() - 12 * 3600000) },
-        { status: 'accepted', updatedBy: collector._id, updatedAt: new Date(Date.now() - 10 * 3600000) },
-        { status: 'picked_up', updatedBy: collector._id, updatedAt: new Date(Date.now() - 2 * 3600000) }
+        { status: 'assigned_ngo', updatedBy: collector._id, updatedAt: new Date(Date.now() - 10 * 3600000) },
+        { status: 'in_progress', updatedBy: collector._id, updatedAt: new Date(Date.now() - 2 * 3600000) }
       ]
     });
 
-    // 4. Recycled Request (Completed, reward points credited, feedback given)
+    // 4. Completed (Completed cleanup, proof uploaded, waiting for verification)
     const requestRecycled = await PlasticRequest.create({
       citizen: citizen._id,
       wasteCategory: 'Mixed Plastic',
@@ -200,18 +231,26 @@ export const seedDatabase = async () => {
         address: 'Kurla Station Road, Kurla, Mumbai, 400070'
       },
       images: ['https://images.unsplash.com/photo-1567095761054-7a02e69e5c43?auto=format&fit=crop&w=600&q=80'],
-      status: 'recycled',
+      status: 'completed',
+      assignedTo: collector._id,
+      assignedOrganizationType: 'ngo',
+      assignedAt: new Date(Date.now() - 3.8 * 24 * 3600000),
+      acceptedAt: new Date(Date.now() - 3.8 * 24 * 3600000),
+      claimedBy: collector._id,
+      claimTimestamp: new Date(Date.now() - 3.8 * 24 * 3600000),
       collector: collector._id,
       recyclingCenter: recycler._id,
+      beforeImage: 'https://images.unsplash.com/photo-1567095761054-7a02e69e5c43?auto=format&fit=crop&w=600&q=80',
+      afterImage: 'https://images.unsplash.com/photo-1591193686104-fddbaafeb55f?auto=format&fit=crop&w=600&q=80',
       pickupProofImage: 'https://images.unsplash.com/photo-1591193686104-fddbaafeb55f?auto=format&fit=crop&w=600&q=80',
+      completedAt: new Date(Date.now() - 3 * 24 * 3600000),
       feedbackRating: 5,
       feedbackComment: 'Excellent and very prompt pickup! Rajesh was extremely polite.',
       history: [
         { status: 'pending', updatedBy: citizen._id, updatedAt: new Date(Date.now() - 4 * 24 * 3600000) },
-        { status: 'accepted', updatedBy: collector._id, updatedAt: new Date(Date.now() - 3.8 * 24 * 3600000) },
-        { status: 'picked_up', updatedBy: collector._id, updatedAt: new Date(Date.now() - 3.2 * 24 * 3600000) },
-        { status: 'received', updatedBy: recycler._id, updatedAt: new Date(Date.now() - 3 * 24 * 3600000) },
-        { status: 'recycled', updatedBy: recycler._id, updatedAt: new Date(Date.now() - 2.8 * 24 * 3600000) }
+        { status: 'assigned_ngo', updatedBy: collector._id, updatedAt: new Date(Date.now() - 3.8 * 24 * 3600000) },
+        { status: 'in_progress', updatedBy: collector._id, updatedAt: new Date(Date.now() - 3.2 * 24 * 3600000) },
+        { status: 'completed', updatedBy: collector._id, updatedAt: new Date(Date.now() - 3 * 24 * 3600000) }
       ]
     });
 

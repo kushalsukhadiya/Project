@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Citizen Dashboard - EcoCycle</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            slate: {
+              350: '#b2c1d3',
+              450: '#8ca1b9',
+              655: '#4b5e78',
+              750: '#28364d',
+              850: '#1e293b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Outfit', 'Inter', sans-serif;
+    }
+    .fade-in {
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-150 transition-colors duration-200">
+  <div id="navbar-container"></div>
+  
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div id="dashboard-content" class="space-y-8 py-4 fade-in">
+      
+      <!-- Welcome & Header Banner -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 sm:p-8 rounded-3xl gap-4 shadow-sm">
+        <div>
+          <div class="inline-flex items-center space-x-2 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1 rounded-full text-xs font-extrabold text-emerald-600 dark:text-emerald-400 mb-2">
+            <i data-lucide="radio" class="w-3.5 h-3.5 animate-pulse"></i>
+            <span>Real-time Dispatch Progress Tracker</span>
+          </div>
+          <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white">Welcome back, <span id="user-name-greeting">Citizen</span>!</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Track all your plastic waste dispatch reports, monitor live collection progress, and collect reward points.
+          </p>
+        </div>
+        <a
+          href="report-waste.html"
+          class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs px-5 py-3 rounded-2xl shadow-md shadow-emerald-500/20 flex items-center space-x-2 transition hover:-translate-y-0.5"
+        >
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          <span>New Dispatch Report</span>
+        </a>
+      </div>
+
+      <!-- Dispatch Summary Stats -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl space-y-1 shadow-sm">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-xs font-bold">Total Dispatches</span>
+            <div class="p-2 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-500 rounded-xl">
+              <i data-lucide="file-text" class="w-4 h-4"></i>
+            </div>
+          </div>
+          <div id="stat-total-dispatches" class="text-2xl font-extrabold text-slate-900 dark:text-white">0</div>
+          <div id="stat-total-weight" class="text-[11px] text-slate-400 font-semibold">0.0 kg reported</div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl space-y-1 shadow-sm">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-xs font-bold">In Progress</span>
+            <div class="p-2 bg-blue-50 dark:bg-blue-950/40 text-blue-500 rounded-xl">
+              <i data-lucide="truck" class="w-4 h-4"></i>
+            </div>
+          </div>
+          <div id="stat-active-dispatches" class="text-2xl font-extrabold text-slate-900 dark:text-white">0</div>
+          <div class="text-[11px] text-blue-500 font-semibold">Active in dispatch pipeline</div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl space-y-1 shadow-sm">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-xs font-bold">Recycled & Done</span>
+            <div class="p-2 bg-purple-50 dark:bg-purple-950/40 text-purple-500 rounded-xl">
+              <i data-lucide="recycle" class="w-4 h-4"></i>
+            </div>
+          </div>
+          <div id="stat-completed-dispatches" class="text-2xl font-extrabold text-slate-900 dark:text-white">0</div>
+          <div class="text-[11px] text-purple-500 font-semibold">Transformed & Verified</div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl space-y-1 shadow-sm">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-xs font-bold">Reward Points</span>
+            <div class="p-2 bg-amber-50 dark:bg-amber-950/40 text-amber-500 rounded-xl">
+              <i data-lucide="award" class="w-4 h-4"></i>
+            </div>
+          </div>
+          <div id="stat-points" class="text-2xl font-extrabold text-amber-500">0 pts</div>
+          <div id="stat-tier" class="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">Bronze Tier</div>
+        </div>
+      </div>
+
+      <!-- Main Section: Dispatch Reports List + Live Lifecycle Stepper -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        
+        <!-- Left 2 Columns: Reports List -->
+        <div class="lg:col-span-2 space-y-4">
+          <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+            <div>
+              <h3 class="font-extrabold text-slate-900 dark:text-white text-lg flex items-center space-x-2">
+                <span>Dispatch Progress Reports</span>
+                <span id="requests-count-badge" class="text-xs bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 px-2.5 py-0.5 rounded-full font-extrabold">0</span>
+              </h3>
+              <p class="text-xs text-slate-400">Select any report to inspect its live stage step-by-step.</p>
+            </div>
+
+            <!-- Filter tabs -->
+            <div class="flex items-center space-x-1 bg-slate-200/60 dark:bg-slate-800 p-1 rounded-2xl text-xs font-extrabold">
+              <button onclick="setFilter('all')" id="filter-all" class="px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm transition">All Reports</button>
+              <button onclick="setFilter('active')" id="filter-active" class="px-3.5 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition">In Progress</button>
+              <button onclick="setFilter('completed')" id="filter-completed" class="px-3.5 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition">Completed</button>
+            </div>
+          </div>
+
+          <div id="requests-list" class="space-y-4">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Right 1 Column: Selected Dispatch Live Lifecycle Stepper -->
+        <div class="space-y-4 lg:sticky lg:top-8">
+          <h3 class="font-extrabold text-slate-900 dark:text-white text-lg flex items-center space-x-2">
+            <i data-lucide="activity" class="w-5 h-5 text-emerald-500"></i>
+            <span>Live Dispatch Lifecycle</span>
+          </h3>
+          <div id="tracking-panel">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-3xl text-center text-xs text-slate-400 space-y-3 shadow-sm">
+              <i data-lucide="truck" class="w-10 h-10 text-slate-300 mx-auto"></i>
+              <p class="font-semibold">Select a dispatch report from the list to track its real-time lifecycle and progress timeline.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Rate Pickup Modal -->
+  <div id="feedback-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 animate-fadeIn">
+      <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
+        <h3 class="font-extrabold text-slate-900 dark:text-white text-base">Rate Pickup Service</h3>
+        <button onclick="closeFeedbackModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-350">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      
+      <form id="feedback-form" class="space-y-4">
+        <div class="space-y-2">
+          <label class="text-xs font-bold text-slate-600 dark:text-slate-400">Select Rating</label>
+          <div class="flex items-center space-x-2 text-yellow-500">
+            <button type="button" class="star-btn p-1" onclick="setRating(1)"><i data-lucide="star" class="w-6 h-6 hover:fill-yellow-400"></i></button>
+            <button type="button" class="star-btn p-1" onclick="setRating(2)"><i data-lucide="star" class="w-6 h-6 hover:fill-yellow-400"></i></button>
+            <button type="button" class="star-btn p-1" onclick="setRating(3)"><i data-lucide="star" class="w-6 h-6 hover:fill-yellow-400"></i></button>
+            <button type="button" class="star-btn p-1" onclick="setRating(4)"><i data-lucide="star" class="w-6 h-6 hover:fill-yellow-400"></i></button>
+            <button type="button" class="star-btn p-1" onclick="setRating(5)"><i data-lucide="star" class="w-6 h-6 hover:fill-yellow-400"></i></button>
+          </div>
+        </div>
+        
+        <div class="space-y-1.5">
+          <label class="text-xs font-bold text-slate-600 dark:text-slate-400">Comments & Suggestion</label>
+          <textarea
+            id="feedback-comment"
+            rows="3"
+            placeholder="Help us improve. Was the collector prompt?"
+            class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition text-slate-900 dark:text-white"
+          ></textarea>
+        </div>
+        
+        <button
+          type="submit"
+          id="feedback-submit-btn"
+          class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold py-3 rounded-2xl text-xs transition shadow-md"
+        >
+          Submit Feedback
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div id="footer-container"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    let requests = [];
+    let selectedRequest = null;
+    let feedbackRequest = null;
+    let selectedRating = 5;
+    let currentFilter = 'all';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = window.auth.getUser();
+      if (!user) return;
+
+      document.getElementById('user-name-greeting').innerText = user.name;
+      await fetchRequests();
+    });
+
+    async function fetchRequests() {
+      const listContainer = document.getElementById('requests-list');
+      
+      try {
+        const data = await window.api.requests.myRequests();
+        requests = data || [];
+
+        updateStats();
+        renderRequestsList();
+        
+        if (requests.length > 0 && !selectedRequest) {
+          selectRequest(requests[0]);
+        }
+      } catch (err) {
+        console.error(err);
+        listContainer.innerHTML = `<div class="p-6 text-center text-xs text-red-500 font-bold">Failed to load dispatch reports.</div>`;
+      }
+    }
+
+    function updateStats() {
+      const user = window.auth.getUser();
+      const totalCount = requests.length;
+      const totalWeight = requests.reduce((sum, r) => sum + (r.estimatedWeight || 0), 0);
+      const activeCount = requests.filter(r => r.status === 'pending' || r.status === 'accepted' || r.status === 'picked_up' || r.status === 'in_progress' || r.status === 'assigned_ngo').length;
+      const completedCount = requests.filter(r => r.status === 'recycled' || r.status === 'verified' || r.status === 'closed' || r.status === 'completed').length;
+
+      document.getElementById('stat-total-dispatches').innerText = totalCount;
+      document.getElementById('stat-total-weight').innerText = `${totalWeight.toFixed(1)} kg reported`;
+      document.getElementById('stat-active-dispatches').innerText = activeCount;
+      document.getElementById('stat-completed-dispatches').innerText = completedCount;
+
+      const points = user?.rewards?.points || 0;
+      const tier = user?.rewards?.tier || 'Bronze';
+      document.getElementById('stat-points').innerText = `${points} pts`;
+      document.getElementById('stat-tier').innerText = `${tier} Tier`;
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      ['all', 'active', 'completed'].forEach(f => {
+        const btn = document.getElementById(`filter-${f}`);
+        if (f === filter) {
+          btn.className = 'px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm transition';
+        } else {
+          btn.className = 'px-3.5 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition';
+        }
+      });
+      renderRequestsList();
+    }
+
+    function getProgressPercent(status) {
+      switch (status) {
+        case 'pending': return 20;
+        case 'accepted':
+        case 'assigned_ngo':
+        case 'assigned_municipality': return 40;
+        case 'picked_up':
+        case 'in_progress': return 60;
+        case 'received': return 80;
+        case 'recycled': return 90;
+        case 'verified':
+        case 'closed':
+        case 'completed': return 100;
+        case 'cancelled':
+        case 'rejected': return 0;
+        default: return 20;
+      }
+    }
+
+    function getProgressStageLabel(status) {
+      switch (status) {
+        case 'pending': return 'Stage 1 of 5: Dispatched & Logged';
+        case 'accepted':
+        case 'assigned_ngo': return 'Stage 2 of 5: Collector Dispatched';
+        case 'picked_up': return 'Stage 3 of 5: Picked Up & En Route';
+        case 'received': return 'Stage 4 of 5: Arrived at Recycler';
+        case 'recycled': return 'Stage 4.5: Plastic Recycled';
+        case 'verified':
+        case 'closed':
+        case 'completed': return 'Stage 5 of 5: Verified & Points Credited';
+        case 'cancelled': return 'Report Cancelled';
+        default: return 'Dispatched';
+      }
+    }
+
+    function getStatusBadgeClass(status) {
+      const badges = {
+        pending: 'bg-amber-50 text-amber-600 dark:bg-amber-950/20 dark:text-amber-400 border border-amber-200 dark:border-amber-800',
+        accepted: 'bg-blue-50 text-blue-600 dark:bg-blue-950/20 dark:text-blue-400 border border-blue-200 dark:border-blue-800',
+        assigned_ngo: 'bg-blue-50 text-blue-600 dark:bg-blue-950/20 dark:text-blue-400 border border-blue-200 dark:border-blue-800',
+        picked_up: 'bg-purple-50 text-purple-600 dark:bg-purple-950/20 dark:text-purple-400 border border-purple-200 dark:border-purple-800',
+        in_progress: 'bg-purple-50 text-purple-600 dark:bg-purple-950/20 dark:text-purple-400 border border-purple-200 dark:border-purple-800',
+        received: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-950/20 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-800',
+        recycled: 'bg-teal-50 text-teal-600 dark:bg-teal-950/20 dark:text-teal-400 border border-teal-200 dark:border-teal-800',
+        completed: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800',
+        verified: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800',
+        closed: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700',
+        cancelled: 'bg-red-50 text-red-600 dark:bg-red-950/20 dark:text-red-400 border border-red-200 dark:border-red-800'
+      };
+      return badges[status] || badges.pending;
+    }
+
+    function renderRequestsList() {
+      const listContainer = document.getElementById('requests-list');
+      
+      let filtered = requests;
+      if (currentFilter === 'active') {
+        filtered = requests.filter(r => r.status === 'pending' || r.status === 'accepted' || r.status === 'picked_up' || r.status === 'assigned_ngo');
+      } else if (currentFilter === 'completed') {
+        filtered = requests.filter(r => r.status === 'recycled' || r.status === 'verified' || r.status === 'closed' || r.status === 'completed');
+      }
+
+      document.getElementById('requests-count-badge').innerText = filtered.length;
+
+      if (filtered.length === 0) {
+        listContainer.innerHTML = `
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-10 text-center text-sm text-slate-500 space-y-3 shadow-sm">
+            <i data-lucide="inbox" class="w-10 h-10 text-slate-300 mx-auto"></i>
+            <p class="font-semibold">No dispatch reports found for this filter.</p>
+            <a
+              href="report-waste.html"
+              class="inline-flex bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 font-extrabold text-xs px-4 py-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800"
+            >
+              Dispatch New Report
+            </a>
+          </div>
+        `;
+        if (window.lucide) window.lucide.createIcons();
+        return;
+      }
+      
+      listContainer.innerHTML = filtered.map(req => {
+        const isSelected = selectedRequest && selectedRequest._id === req._id;
+        const borderClass = isSelected ? 'border-emerald-500 ring-2 ring-emerald-500/20 shadow-md' : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700';
+        const dateStr = new Date(req.pickupDate || req.createdAt).toLocaleDateString();
+        const percent = getProgressPercent(req.status);
+        const stageLabel = getProgressStageLabel(req.status);
+
+        let rateButton = '';
+        if ((req.status === 'completed' || req.status === 'recycled' || req.status === 'closed' || req.status === 'verified') && !req.feedbackRating) {
+          rateButton = `
+            <button
+              onclick="event.stopPropagation(); openFeedbackModal('${req._id}')"
+              class="flex items-center space-x-1 px-3 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl text-xs font-extrabold shadow-sm shadow-yellow-500/20 transition"
+            >
+              <i data-lucide="star" class="w-3.5 h-3.5 fill-white"></i>
+              <span>Rate Service</span>
+            </button>
+          `;
+        }
+
+        let cancelButton = '';
+        if (req.status === 'pending') {
+          cancelButton = `
+            <button
+              onclick="event.stopPropagation(); cancelRequest('${req._id}')"
+              class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl border border-transparent hover:border-red-100 transition"
+              title="Cancel report"
+            >
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          `;
+        }
+
+        return `
+          <div 
+            onclick="clickRequest('${req._id}')"
+            class="bg-white dark:bg-slate-900 border ${borderClass} p-5 rounded-3xl cursor-pointer transition space-y-4 shadow-sm"
+          >
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+              <div class="space-y-1">
+                <div class="flex items-center space-x-2">
+                  <span class="font-extrabold text-sm text-slate-800 dark:text-slate-200">${req.wasteCategory}</span>
+                  <span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${getStatusBadgeClass(req.status)}">
+                    ${req.status.replace('_', ' ')}
+                  </span>
+                </div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-3 pt-0.5">
+                  <span class="font-bold">Weight: ${req.estimatedWeight} kg</span>
+                  <span>•</span>
+                  <span class="flex items-center space-x-1">
+                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-500"></i>
+                    <span>${req.location?.address || 'Mumbai'}</span>
+                  </span>
+                </div>
+              </div>
+
+              <div class="flex items-center space-x-2 self-end sm:self-center">
+                ${cancelButton}
+                ${rateButton}
+                <span class="text-xs font-extrabold text-emerald-500 flex items-center space-x-1 pl-2">
+                  <span>Track Live</span>
+                  <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                </span>
+              </div>
+            </div>
+
+            <!-- Live Stepper Progress Bar -->
+            <div class="space-y-1.5 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+              <div class="flex justify-between items-center text-[11px] font-extrabold">
+                <span class="text-slate-500 dark:text-slate-400">${stageLabel}</span>
+                <span class="text-emerald-500 font-extrabold">${percent}%</span>
+              </div>
+              <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+                <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-2 rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function clickRequest(id) {
+      const req = requests.find(r => r._id === id);
+      if (req) {
+        selectRequest(req);
+        renderRequestsList();
+      }
+    }
+
+    function selectRequest(req) {
+      selectedRequest = req;
+      const trackingPanel = document.getElementById('tracking-panel');
+      const formattedId = req._id.slice(-8);
+      const statusBadge = getStatusBadgeClass(req.status);
+      const createdDate = new Date(req.createdAt).toLocaleString();
+      const overallPercent = getProgressPercent(req.status);
+
+      // Define 5 key dispatch lifecycle steps
+      const steps = [
+        {
+          key: 'pending',
+          title: '1. Report Dispatched',
+          desc: 'Citizen logged plastic waste report with geolocation.',
+          done: true
+        },
+        {
+          key: 'accepted',
+          title: '2. Collector Dispatched',
+          desc: req.collectorId ? `Assigned to ${req.collectorId.name}` : 'Awaiting collector assignment.',
+          done: ['accepted', 'assigned_ngo', 'picked_up', 'received', 'recycled', 'verified', 'closed', 'completed'].includes(req.status)
+        },
+        {
+          key: 'picked_up',
+          title: '3. Plastic Picked Up',
+          desc: req.proofUrl ? 'Collected with photographic proof.' : 'En route to pickup location.',
+          done: ['picked_up', 'received', 'recycled', 'verified', 'closed', 'completed'].includes(req.status)
+        },
+        {
+          key: 'received',
+          title: '4. Recycler Facility Processing',
+          desc: req.recyclerId ? `Delivered to ${req.recyclerId.facilityName || req.recyclerId.name}` : 'En route to industrial recycling center.',
+          done: ['received', 'recycled', 'verified', 'closed', 'completed'].includes(req.status)
+        },
+        {
+          key: 'verified',
+          title: '5. Verified & Points Released',
+          desc: req.rewardsEarned ? `Verified! +${req.rewardsEarned} reward points credited.` : 'Admin verification pending.',
+          done: ['verified', 'closed', 'completed'].includes(req.status)
+        }
+      ];
+
+      const stepperHtml = steps.map((s, idx) => {
+        let iconBg = 'bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700';
+        let titleColor = 'text-slate-400';
+        let descColor = 'text-slate-400/80';
+        
+        if (s.done) {
+          iconBg = 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/20';
+          titleColor = 'text-slate-900 dark:text-white font-extrabold';
+          descColor = 'text-slate-500 dark:text-slate-400 font-semibold';
+        }
+
+        const isLast = idx === steps.length - 1;
+
+        return `
+          <div class="flex items-start space-x-3.5 relative pb-6 ${isLast ? 'pb-0' : ''}">
+            ${!isLast ? `<div class="absolute left-3.5 top-7 bottom-0 w-0.5 ${s.done ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-800'}"></div>` : ''}
+            <div class="relative z-10 flex items-center justify-center w-7 h-7 rounded-full ${iconBg} text-xs font-bold shrink-0 mt-0.5">
+              ${s.done ? '<i data-lucide="check" class="w-4 h-4"></i>' : (idx + 1)}
+            </div>
+            <div class="space-y-0.5 text-left">
+              <h5 class="text-xs ${titleColor}">${s.title}</h5>
+              <p class="text-[11px] leading-relaxed ${descColor}">${s.desc}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Collector Info
+      let collectorHtml = '';
+      if (req.collectorId) {
+        collectorHtml = `
+          <div class="bg-slate-50 dark:bg-slate-850 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-3">
+            <h5 class="text-xs font-extrabold text-slate-800 dark:text-slate-200 flex items-center space-x-1.5">
+              <i data-lucide="user" class="w-4 h-4 text-emerald-500"></i>
+              <span>Dispatched Collector Officer</span>
+            </h5>
+            <div class="flex items-center space-x-3 text-xs">
+              <img src="${req.collectorId.profilePicture || 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=50&h=50&q=80'}" class="w-9 h-9 rounded-xl object-cover" />
+              <div>
+                <div class="font-bold text-slate-850 dark:text-slate-250">${req.collectorId.name}</div>
+                <div class="text-[10px] text-slate-450 mt-0.5">Contact: ${req.collectorId.phoneNumber || 'N/A'}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Recycler Info
+      let recyclerHtml = '';
+      if (req.recyclerId) {
+        recyclerHtml = `
+          <div class="bg-slate-50 dark:bg-slate-850 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-3">
+            <h5 class="text-xs font-extrabold text-slate-800 dark:text-slate-200 flex items-center space-x-1.5">
+              <i data-lucide="building" class="w-4 h-4 text-blue-500"></i>
+              <span>Destination Recycling Center</span>
+            </h5>
+            <div class="text-xs">
+              <div class="font-bold text-slate-850 dark:text-slate-250">${req.recyclerId.facilityName || req.recyclerId.name}</div>
+              <div class="text-[10px] text-slate-450 mt-1">${req.recyclerId.address || 'Goregaon'}, ${req.recyclerId.city || 'Mumbai'}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Waste Image Attachment
+      let imageHtml = '';
+      if (req.imageUrl) {
+        imageHtml = `
+          <div class="space-y-1.5">
+            <h5 class="text-[11px] font-bold text-slate-500">Reported Plastic Photo:</h5>
+            <div class="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm max-w-[180px]">
+              <img src="${req.imageUrl}" class="w-full h-28 object-cover" />
+              <a href="${req.imageUrl}" target="_blank" class="absolute bottom-2 right-2 bg-slate-900/70 hover:bg-slate-900/90 text-white rounded-lg p-1.5 transition text-[10px] font-bold">
+                Zoom
+              </a>
+            </div>
+          </div>
+        `;
+      }
+
+      // Collector Proof Attachment
+      let proofHtml = '';
+      if (req.proofUrl) {
+        proofHtml = `
+          <div class="space-y-1.5">
+            <h5 class="text-[11px] font-bold text-slate-500">Collector Pickup Proof:</h5>
+            <div class="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm max-w-[180px]">
+              <img src="${req.proofUrl}" class="w-full h-28 object-cover" />
+              <a href="${req.proofUrl}" target="_blank" class="absolute bottom-2 right-2 bg-slate-900/70 hover:bg-slate-900/90 text-white rounded-lg p-1.5 transition text-[10px] font-bold">
+                Zoom
+              </a>
+            </div>
+          </div>
+        `;
+      }
+
+      // Service Feedback
+      let ratingInfoHtml = '';
+      if (req.feedbackRating) {
+        let stars = '';
+        for (let i = 1; i <= 5; i++) {
+          stars += `<i data-lucide="star" class="w-3.5 h-3.5 ${i <= req.feedbackRating ? 'text-yellow-500 fill-yellow-500' : 'text-slate-350'}"></i>`;
+        }
+        ratingInfoHtml = `
+          <div class="bg-yellow-50/50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900 p-4 rounded-2xl space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-extrabold text-yellow-600 dark:text-yellow-400">Citizen Service Rating</span>
+              <div class="flex items-center space-x-0.5">${stars}</div>
+            </div>
+            ${req.feedbackComment ? `<p class="text-[11px] text-slate-600 dark:text-slate-400 italic">"${req.feedbackComment}"</p>` : ''}
+          </div>
+        `;
+      }
+
+      trackingPanel.innerHTML = `
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl space-y-6 shadow-sm">
+          <div class="flex justify-between items-start border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div>
+              <h4 class="font-extrabold text-base text-slate-800 dark:text-white">${req.wasteCategory}</h4>
+              <p class="text-[10px] text-slate-400 font-bold mt-0.5">REPORT ID: #${formattedId}</p>
+            </div>
+            <span class="text-[10px] font-extrabold px-2.5 py-1 rounded-full ${statusBadge}">
+              ${req.status.replace('_', ' ')}
+            </span>
+          </div>
+
+          <!-- Overall Progress Bar -->
+          <div class="space-y-1.5 bg-slate-50 dark:bg-slate-850 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+            <div class="flex justify-between items-center text-xs font-extrabold">
+              <span class="text-slate-600 dark:text-slate-300">Overall Dispatch Progress</span>
+              <span class="text-emerald-500">${overallPercent}%</span>
+            </div>
+            <div class="w-full bg-slate-200 dark:bg-slate-750 rounded-full h-2.5 overflow-hidden">
+              <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-2.5 rounded-full transition-all duration-500" style="width: ${overallPercent}%"></div>
+            </div>
+          </div>
+
+          <!-- 5-Stage Stepper -->
+          <div class="space-y-1 pt-1">
+            <h5 class="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-4">Stage-by-Stage Tracking</h5>
+            ${stepperHtml}
+          </div>
+
+          <!-- Proof Attachments -->
+          ${(imageHtml || proofHtml) ? `
+            <div class="flex flex-wrap gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+              ${imageHtml}
+              ${proofHtml}
+            </div>
+          ` : ''}
+
+          <!-- People info & Feedback -->
+          ${collectorHtml}
+          ${recyclerHtml}
+          ${ratingInfoHtml}
+
+          <div class="text-[10px] text-slate-400 text-center border-t border-slate-100 dark:border-slate-800 pt-3">
+            Dispatched On: ${createdDate}
+          </div>
+        </div>
+      `;
+
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    async function cancelRequest(id) {
+      if (!window.confirm('Are you sure you want to cancel this pickup request?')) return;
+      try {
+        await window.api.requests.cancel(id);
+        await fetchRequests();
+      } catch (err) {
+        alert(err.message || 'Cancel failed.');
+      }
+    }
+
+    function openFeedbackModal(id) {
+      const req = requests.find(r => r._id === id);
+      if (!req) return;
+      feedbackRequest = req;
+      setRating(5);
+      document.getElementById('feedback-comment').value = '';
+      document.getElementById('feedback-modal').classList.remove('hidden');
+    }
+
+    function closeFeedbackModal() {
+      document.getElementById('feedback-modal').classList.add('hidden');
+      feedbackRequest = null;
+    }
+
+    function setRating(rating) {
+      selectedRating = rating;
+      const stars = document.querySelectorAll('.star-btn i');
+      stars.forEach((star, index) => {
+        if (index < rating) {
+          star.classList.add('text-yellow-500', 'fill-yellow-500');
+          star.classList.remove('text-slate-350');
+        } else {
+          star.classList.remove('text-yellow-500', 'fill-yellow-500');
+          star.classList.add('text-slate-350');
+        }
+      });
+    }
+
+    document.getElementById('feedback-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!feedbackRequest) return;
+
+      const comment = document.getElementById('feedback-comment').value;
+      const submitBtn = document.getElementById('feedback-submit-btn');
+
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Submitting...';
+
+      try {
+        await window.api.requests.submitFeedback(feedbackRequest._id, selectedRating, comment);
+        closeFeedbackModal();
+        await fetchRequests();
+        await window.auth.refreshUser();
+      } catch (err) {
+        alert(err.message || 'Feedback submission failed.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Submit Feedback';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -7,45 +7,7 @@ import {
   Scale, Info, Calendar
 } from 'lucide-react';
 
-// Decoupled Impact calculator for frontend use
-const getLocalImpact = (category: string, weight: number) => {
-  let pointsPerKg = 10;
-  let co2SavedPerKg = 1.5;
-  let recyclability = 70; // %
 
-  switch (category) {
-    case 'PET Bottles':
-      pointsPerKg = 15;
-      co2SavedPerKg = 1.8;
-      recyclability = 92;
-      break;
-    case 'Plastic Bottles':
-      pointsPerKg = 12;
-      co2SavedPerKg = 1.6;
-      recyclability = 85;
-      break;
-    case 'Industrial Plastic':
-      pointsPerKg = 20;
-      co2SavedPerKg = 2.2;
-      recyclability = 95;
-      break;
-    case 'Food Packaging':
-      pointsPerKg = 8;
-      co2SavedPerKg = 1.2;
-      recyclability = 55;
-      break;
-    default:
-      pointsPerKg = 10;
-      co2SavedPerKg = 1.4;
-      recyclability = 75;
-  }
-
-  return {
-    points: Math.round(weight * pointsPerKg),
-    co2: parseFloat((weight * co2SavedPerKg).toFixed(1)),
-    recyclability
-  };
-};
 
 export const ReportWaste: React.FC = () => {
   const navigate = useNavigate();
@@ -181,9 +143,7 @@ export const ReportWaste: React.FC = () => {
     }
   };
 
-  // Dynamic calculations
-  const weightNum = parseFloat(weight) || 0;
-  const metrics = getLocalImpact(category, weightNum);
+
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 py-4 fade-in">
@@ -302,27 +262,7 @@ export const ReportWaste: React.FC = () => {
             </div>
           </div>
 
-          {/* Impact preview panel */}
-          <div className="bg-emerald-500/5 rounded-2xl border border-emerald-500/10 p-4 space-y-3">
-            <h4 className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center space-x-1">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Smart Environmental Impact Preview</span>
-            </h4>
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                <div className="text-[10px] font-bold text-slate-400">Recyclability</div>
-                <div className="text-sm font-extrabold text-slate-800 dark:text-emerald-450 mt-1">{metrics.recyclability}%</div>
-              </div>
-              <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                <div className="text-[10px] font-bold text-slate-400">Reward Points</div>
-                <div className="text-sm font-extrabold text-slate-800 dark:text-emerald-450 mt-1">+{metrics.points}</div>
-              </div>
-              <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                <div className="text-[10px] font-bold text-slate-400">CO₂ Offset</div>
-                <div className="text-sm font-extrabold text-slate-800 dark:text-emerald-450 mt-1">{metrics.co2} kg</div>
-              </div>
-            </div>
-          </div>
+
         </div>
 
         {/* Right Side: Map picker & nearest center recommendation */}

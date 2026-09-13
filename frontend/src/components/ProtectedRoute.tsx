@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: ('citizen' | 'collector' | 'recycler' | 'admin')[];
+  allowedRoles?: ('citizen' | 'collector' | 'recycler' | 'admin' | 'municipal')[];
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
@@ -32,6 +32,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
     switch (user.role) {
       case 'admin':
         return <Navigate to="/admin" replace />;
+      case 'municipal':
+        return <Navigate to="/municipal" replace />;
       case 'collector':
         return <Navigate to="/collector" replace />;
       case 'recycler':

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collector Dashboard - EcoCycle</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            slate: {
+              350: '#b2c1d3',
+              450: '#8ca1b9',
+              655: '#4b5e78',
+              850: '#1e293b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Outfit', 'Inter', sans-serif;
+    }
+    .fade-in {
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    /* Leaflet overrides */
+    .leaflet-container {
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      font-family: inherit;
+    }
+    .leaflet-marker-icon {
+      margin-left: 0 !important;
+      margin-top: 0 !important;
+    }
+  </style>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-150 transition-colors duration-200">
+  <div id="navbar-container"></div>
+  
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="space-y-8 py-4 fade-in">
+      
+      <!-- Welcome Header -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 sm:p-8 rounded-3xl gap-4 shadow-sm">
+        <div>
+          <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white">Collector Control Panel</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Locate pending garbage piles, and claim jobs to resolve waste issues.
+          </p>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex items-center space-x-4">
+          <div class="p-3 bg-emerald-500/10 rounded-xl"><i data-lucide="dollar-sign" class="w-6 h-6 text-emerald-500"></i></div>
+          <div>
+            <div class="text-[10px] uppercase font-bold text-slate-450">My Earnings</div>
+            <div class="text-xl font-extrabold text-slate-800 dark:text-white mt-0.5">₹<span id="collector-earnings">0</span></div>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex items-center space-x-4">
+          <div class="p-3 bg-blue-500/10 rounded-xl"><i data-lucide="check-circle" class="w-6 h-6 text-blue-500"></i></div>
+          <div>
+            <div class="text-[10px] uppercase font-bold text-slate-450">Completed Today</div>
+            <div class="text-xl font-extrabold text-slate-800 dark:text-white mt-0.5"><span id="completed-today">0</span> jobs</div>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex items-center space-x-4">
+          <div class="p-3 bg-yellow-500/10 rounded-xl"><i data-lucide="scale" class="w-6 h-6 text-yellow-500"></i></div>
+          <div>
+            <div class="text-[10px] uppercase font-bold text-slate-450">All-Time Completed</div>
+            <div class="text-xl font-extrabold text-slate-800 dark:text-white mt-0.5"><span id="all-time-completed">0</span> jobs</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Split Map and Jobs Panel -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        
+        <!-- Left: Map Viewer -->
+        <div class="h-[460px] rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
+          <div id="jobs-map" class="h-full w-full"></div>
+        </div>
+
+        <!-- Right: Active/Pending Queues -->
+        <div class="space-y-6">
+          <div class="border-b border-slate-200 dark:border-slate-800 flex space-x-4">
+            <button id="tab-active-btn" onclick="switchTab('active')" class="pb-3 text-sm font-extrabold border-b-2 transition-all border-emerald-500 text-emerald-600 dark:text-emerald-400">
+              Active Pickups (<span id="active-count">0</span>)
+            </button>
+            <button id="tab-pending-btn" onclick="switchTab('pending')" class="pb-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-850 dark:hover:text-slate-200 transition-all">
+              Available Jobs Queue (<span id="pending-count">0</span>)
+            </button>
+          </div>
+
+          <!-- Active Pickups List -->
+          <div id="active-list" class="space-y-4">
+            <!-- Active lists injected -->
+          </div>
+
+          <!-- Available Pending Jobs List -->
+          <div id="pending-list" class="space-y-4 hidden">
+            <!-- Pending lists injected -->
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </main>
+
+  <!-- Complete Pickup Modal -->
+  <div id="complete-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 animate-fadeIn">
+      <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
+        <h3 class="font-extrabold text-slate-900 dark:text-white text-base">Complete Job Transfer</h3>
+        <button onclick="closeCompleteModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-350">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div id="modal-error" class="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-xl text-xs text-red-600 dark:text-red-400 hidden"></div>
+
+      <form id="complete-form" class="space-y-4">
+        <!-- Select Recycler -->
+        <div class="space-y-1.5">
+          <label class="text-xs font-bold text-slate-600 dark:text-slate-400">Transfer Recycler Facility</label>
+          <select id="recycler-select" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition text-slate-900 dark:text-white font-medium" required>
+            <!-- Injected recyclers -->
+          </select>
+        </div>
+
+        <!-- Upload image proof -->
+        <div class="space-y-1.5">
+          <label class="text-xs font-bold text-slate-600 dark:text-slate-400">Upload Pickup Photo Proof</label>
+          <div class="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-center cursor-pointer hover:border-emerald-500 transition relative">
+            <input type="file" id="proof-image-file" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required onchange="handleProofImageChange(event)" />
+            <div id="proof-prompt" class="space-y-1">
+              <i data-lucide="camera" class="w-6 h-6 text-slate-450 mx-auto"></i>
+              <div class="text-xs text-slate-500">Tap to upload / capture proof photo</div>
+            </div>
+            <div id="proof-preview-container" class="hidden">
+              <img id="proof-preview" class="h-20 mx-auto object-cover rounded-lg" />
+              <div class="text-[10px] text-slate-450 mt-1" id="proof-filename"></div>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" id="complete-submit-btn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold py-3.5 rounded-2xl text-xs shadow-md">
+          Transfer & Complete Job
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div id="footer-container"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    let activeJobs = [];
+    let pendingJobs = [];
+    let recyclers = [];
+    let dutyActive = false;
+    let activeTab = 'active';
+
+    let map = null;
+    let markersLayer = null;
+
+    let targetJobToComplete = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      initMap();
+      await fetchDashboardData();
+    });
+
+    function initMap() {
+      delete L.Icon.Default.prototype._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+        iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+      });
+
+      map = L.map('jobs-map').setView([19.0760, 72.8777], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(map);
+
+      markersLayer = L.layerGroup().addTo(map);
+    }
+
+    async function fetchDashboardData() {
+      try {
+        const stats = await window.api.collector.getStats();
+        
+        dutyActive = stats.availability;
+        document.getElementById('collector-earnings').innerText = stats.earnings;
+        document.getElementById('completed-today').innerText = stats.completedJobsToday;
+        document.getElementById('all-time-completed').innerText = stats.totalCompletedJobs;
+
+        activeJobs = stats.activeJobs;
+        document.getElementById('active-count').innerText = activeJobs.length;
+
+        // Fetch pending public jobs
+        pendingJobs = await window.api.collector.getPendingJobs();
+        document.getElementById('pending-count').innerText = pendingJobs.length;
+
+        // Render Lists
+        renderActivePickups();
+        renderPendingJobs();
+
+        // Render Map Markers
+        syncMapMarkers();
+
+        // Fetch recyclers list
+        const token = window.auth.getToken();
+        const response = await fetch('http://localhost:5000/api/auth/recyclers', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (response.ok) {
+          recyclers = await response.json();
+        } else {
+          // Fallback recycler
+          recyclers = [{
+            _id: 'recycler_fallback_id',
+            name: 'GreenTech Recycling Center',
+            facilityName: 'GreenTech Recycling Center',
+            address: 'Industrial Sector 5, Goregaon',
+            city: 'Mumbai'
+          }];
+        }
+        
+        const recyclerSelect = document.getElementById('recycler-select');
+        recyclerSelect.innerHTML = recyclers.map(r => `
+          <option value="${r._id}">${r.facilityName || r.name} (${r.area || r.city})</option>
+        `).join('');
+
+      } catch (err) {
+        console.error('Failed to load collector dashboard:', err);
+      }
+    }
+
+
+
+    function switchTab(tab) {
+      activeTab = tab;
+      
+      const tabActive = document.getElementById('tab-active-btn');
+      const tabPending = document.getElementById('tab-pending-btn');
+      const activeList = document.getElementById('active-list');
+      const pendingList = document.getElementById('pending-list');
+
+      if (tab === 'active') {
+        tabActive.className = "pb-3 text-sm font-extrabold border-b-2 transition-all border-emerald-500 text-emerald-600 dark:text-emerald-400";
+        tabPending.className = "pb-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-850 dark:hover:text-slate-200 transition-all";
+        activeList.classList.remove('hidden');
+        pendingList.classList.add('hidden');
+      } else {
+        tabPending.className = "pb-3 text-sm font-extrabold border-b-2 transition-all border-emerald-500 text-emerald-600 dark:text-emerald-400";
+        tabActive.className = "pb-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-850 dark:hover:text-slate-200 transition-all";
+        pendingList.classList.remove('hidden');
+        activeList.classList.add('hidden');
+      }
+      
+      // Auto adjust map zoom bounds
+      syncMapMarkers();
+    }
+
+    function renderActivePickups() {
+      const container = document.getElementById('active-list');
+      if (activeJobs.length === 0) {
+        container.innerHTML = `<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl text-center text-xs text-slate-450 shadow-sm">No active pickup jobs assigned to you.</div>`;
+        return;
+      }
+
+      container.innerHTML = activeJobs.map(job => `
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm space-y-4">
+          <div class="flex justify-between items-start">
+            <div>
+              <div class="font-extrabold text-sm text-slate-800 dark:text-white">${job.wasteCategory}</div>
+              <p class="text-[10px] text-slate-450 mt-0.5 font-medium truncate max-w-[240px]">${job.location.address}</p>
+            </div>
+            <span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/20 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+              ACCEPTED
+            </span>
+          </div>
+
+          <div class="flex justify-between items-center text-xs border-t border-b border-slate-50 dark:border-slate-850 py-2.5 font-semibold">
+            <span class="text-slate-500">Quantity: ${job.estimatedWeight} kg</span>
+            <span class="text-slate-500">Citizen: ${job.citizenId?.name || 'User'}</span>
+          </div>
+
+          <div class="flex space-x-2">
+            <button onclick="zoomToCoords(${job.location.coordinates[1]}, ${job.location.coordinates[0]}, '${job._id}')" class="flex-grow py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1">
+              <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
+              <span>Locate on Map</span>
+            </button>
+            <button onclick="openCompleteModal('${job._id}')" class="flex-grow py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1">
+              <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+              <span>Complete Pickup</span>
+            </button>
+            <button onclick="releaseJob('${job._id}')" class="py-2 px-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl text-xs font-bold border border-transparent hover:border-red-100 transition" title="Release Job">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function renderPendingJobs() {
+      const container = document.getElementById('pending-list');
+      if (pendingJobs.length === 0) {
+        container.innerHTML = `<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl text-center text-xs text-slate-455 shadow-sm">No escalated complaints currently available.</div>`;
+        return;
+      }
+
+      container.innerHTML = pendingJobs.map(job => `
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm space-y-4">
+          <div class="flex justify-between items-start">
+            <div>
+              <div class="font-extrabold text-sm text-slate-800 dark:text-white">${job.wasteCategory}</div>
+              <p class="text-[10px] text-slate-450 mt-0.5 font-medium truncate max-w-[240px]">${job.location.address}</p>
+            </div>
+            <span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-red-50 text-red-600 dark:bg-red-950/20 dark:text-red-400 border border-red-200 dark:border-red-800">
+              ESCALATED TO NGO
+            </span>
+          </div>
+
+          <div class="flex justify-between items-center text-xs border-t border-b border-slate-50 dark:border-slate-850 py-2.5 font-semibold">
+            <span class="text-slate-500">Weight: ${job.estimatedWeight} kg</span>
+            <span class="text-slate-500">Area: ${job.location.address.split(',')[1] || 'Mumbai'}</span>
+          </div>
+
+          <div class="flex space-x-2">
+            <button onclick="zoomToCoords(${job.location.coordinates[1]}, ${job.location.coordinates[0]}, '${job._id}')" class="py-2 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1">
+              <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
+              <span>Locate</span>
+            </button>
+            <button onclick="acceptJob('${job._id}')" class="flex-grow py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+              <span>Claim Complaint</span>
+            </button>
+          </div>
+        </div>
+      `).join('');
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function syncMapMarkers() {
+      markersLayer.clearLayers();
+      const currentList = activeTab === 'active' ? activeJobs : pendingJobs;
+      if (currentList.length === 0) return;
+
+      const bounds = L.latLngBounds([]);
+
+      currentList.forEach(job => {
+        const coords = job.location.coordinates;
+        if (!coords || coords.length !== 2) return;
+        const latLng = [coords[1], coords[0]];
+        bounds.extend(latLng);
+
+        let color = '#3b82f6'; // Blue: Accepted (active)
+        if (job.status === 'pending') color = '#ef4444'; // Red: Pending
+        
+        const dotIcon = L.divIcon({
+          className: 'custom-dot-marker',
+          html: `<div style="background-color: ${color}; width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.35);"></div>`,
+          iconSize: [16, 16],
+          iconAnchor: [8, 8]
+        });
+
+        const markerObj = L.marker(latLng, { icon: dotIcon }).addTo(markersLayer);
+        
+        const shortAddr = job.location.address.split(',').slice(0, 2).join(',');
+        markerObj.bindPopup(`
+          <div style="font-family: inherit; font-size: 11px; padding: 2px; color: #334155;">
+            <strong style="color: #0f172a; font-size: 12px;">${job.wasteCategory}</strong>
+            <div style="margin-top: 4px;">Weight: ${job.estimatedWeight} kg</div>
+            <div style="font-size: 9px; color: #64748b; margin-top: 4px;">${shortAddr}</div>
+          </div>
+        `);
+      });
+
+      if (currentList.length > 1) {
+        map.fitBounds(bounds, { padding: [40, 40] });
+      } else if (currentList.length === 1) {
+        const c = currentList[0].location.coordinates;
+        map.setView([c[1], c[0]], 13);
+      }
+    }
+
+    function zoomToCoords(lat, lng, jobId) {
+      map.setView([lat, lng], 14);
+      // Try to find the marker and open it (markers are generated dynamically on syncMapMarkers)
+    }
+
+    async function acceptJob(id) {
+      try {
+        await window.api.collector.acceptJob(id);
+        alert('Job accepted! It is added to your active pickups.');
+        await fetchDashboardData();
+      } catch (err) {
+        alert(err.message || 'Accept failed.');
+      }
+    }
+
+    async function releaseJob(id) {
+      if (!window.confirm('Release this job back to the public queue?')) return;
+      try {
+        await window.api.collector.rejectJob(id);
+        await fetchDashboardData();
+      } catch (err) {
+        alert(err.message || 'Release failed.');
+      }
+    }
+
+    function openCompleteModal(id) {
+      targetJobToComplete = id;
+      document.getElementById('modal-error').classList.add('hidden');
+      document.getElementById('proof-prompt').classList.remove('hidden');
+      document.getElementById('proof-preview-container').classList.add('hidden');
+      document.getElementById('proof-image-file').value = '';
+      document.getElementById('complete-modal').classList.remove('hidden');
+    }
+
+    function closeCompleteModal() {
+      document.getElementById('complete-modal').classList.add('hidden');
+      targetJobToComplete = null;
+    }
+
+    function handleProofImageChange(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const prompt = document.getElementById('proof-prompt');
+      const container = document.getElementById('proof-preview-container');
+      const preview = document.getElementById('proof-preview');
+      const filename = document.getElementById('proof-filename');
+
+      prompt.classList.add('hidden');
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        preview.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+      filename.innerText = file.name;
+      container.classList.remove('hidden');
+    }
+
+    document.getElementById('complete-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!targetJobToComplete) return;
+
+      const recyclerId = document.getElementById('recycler-select').value;
+      const fileInput = document.getElementById('proof-image-file');
+      const errBox = document.getElementById('modal-error');
+      const submitBtn = document.getElementById('complete-submit-btn');
+
+      errBox.classList.add('hidden');
+
+      if (fileInput.files.length === 0) {
+        errBox.innerText = 'Please select a photo proof of the pickup.';
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Uploading transfer proof...';
+
+      const formData = new FormData();
+      formData.append('recyclerId', recyclerId);
+      formData.append('image', fileInput.files[0]);
+
+      try {
+        await window.api.collector.pickupJob(targetJobToComplete, formData);
+        closeCompleteModal();
+        await fetchDashboardData();
+      } catch (err) {
+        errBox.innerText = err.message || 'Complete pickup failed.';
+        errBox.classList.remove('hidden');
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Transfer & Complete Job';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -114,7 +114,7 @@ export const api = {
     getAnalytics: () => api.get('/admin/analytics'),
     getUsers: () => api.get('/admin/users'),
     deleteUser: (id: string) => api.delete(`/admin/users/${id}`),
-    verifyRequest: (id: string) => api.put(`/admin/requests/${id}/verify`),
+    verifyRequest: (id: string, adminRemarks?: string) => api.put(`/admin/requests/${id}/verify`, { adminRemarks }),
     getAllRequests: () => api.get('/admin/requests'),
     getFeedback: () => api.get('/admin/feedback')
   },

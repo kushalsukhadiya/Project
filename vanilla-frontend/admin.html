@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - EcoCycle</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            slate: {
+              350: '#b2c1d3',
+              450: '#8ca1b9',
+              655: '#4b5e78',
+              850: '#1e293b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Outfit', 'Inter', sans-serif;
+    }
+    .fade-in {
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-150 transition-colors duration-200">
+  <div id="navbar-container"></div>
+  
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="space-y-8 py-4 fade-in">
+      
+      <!-- Welcome Header -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 sm:p-8 rounded-3xl gap-4 shadow-sm flex flex-col sm:flex-row justify-between sm:items-center">
+        <div>
+          <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white">Admin Control Portal</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Analyze smart recycling metrics, approve point releases, and manage system accounts.
+          </p>
+        </div>
+      </div>
+
+      <!-- Navigation tabs -->
+      <div class="border-b border-slate-200 dark:border-slate-800 flex space-x-6">
+        <button id="tab-analytics" onclick="switchTab('analytics')" class="pb-3 text-sm font-extrabold border-b-2 border-emerald-500 text-emerald-600 dark:text-emerald-400">
+          Analytics Hub
+        </button>
+
+        <button id="tab-verify" onclick="switchTab('verify')" class="pb-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-850 dark:hover:text-slate-205 transition-all">
+          Verify Point Release (<span id="verify-count">0</span>)
+        </button>
+        <button id="tab-users" onclick="switchTab('users')" class="pb-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-850 dark:hover:text-slate-205 transition-all">
+          User Management
+        </button>
+        <button id="tab-feedback" onclick="switchTab('feedback')" class="pb-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-850 dark:hover:text-slate-205 transition-all">
+          Feedback Logs
+        </button>
+      </div>
+
+      <!-- Tab Content: Analytics -->
+      <div id="content-analytics" class="space-y-8">
+        <!-- Stats Summary Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex items-center space-x-4">
+            <div class="p-3 bg-emerald-500/10 rounded-xl"><i data-lucide="users" class="w-6 h-6 text-emerald-500"></i></div>
+            <div>
+              <div class="text-[9px] uppercase font-bold text-slate-455">Total Users</div>
+              <div class="text-lg font-extrabold text-slate-800 dark:text-white" id="stat-total-users">0</div>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex items-center space-x-4">
+            <div class="p-3 bg-blue-500/10 rounded-xl"><i data-lucide="file-text" class="w-6 h-6 text-blue-500"></i></div>
+            <div>
+              <div class="text-[9px] uppercase font-bold text-slate-455">Total Requests</div>
+              <div class="text-lg font-extrabold text-slate-800 dark:text-white" id="stat-total-reqs">0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analytical Charts Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+            <h4 class="font-extrabold text-xs text-slate-500 uppercase tracking-wider">Monthly Plastic Collection (kg)</h4>
+            <div class="h-64 relative">
+              <canvas id="chart-monthly"></canvas>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+            <h4 class="font-extrabold text-xs text-slate-500 uppercase tracking-wider">Waste Type Distribution</h4>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas id="chart-distribution"></canvas>
+            </div>
+      </div>
+
+      <!-- Tab Content: Point Release Verification -->
+      <div id="content-verify" class="space-y-4 hidden">
+        <h3 class="font-extrabold text-slate-900 dark:text-white text-lg">Verification Queue</h3>
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-slate-500 dark:text-slate-400">
+              <thead class="bg-slate-50 dark:bg-slate-850/50 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th class="px-6 py-4">Citizen Name</th>
+                  <th class="px-6 py-4">Category</th>
+                  <th class="px-6 py-4">Confirmed Weight</th>
+                  <th class="px-6 py-4">Recycler facility</th>
+                  <th class="px-6 py-4 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody id="verify-rows" class="divide-y divide-slate-100 dark:divide-slate-800">
+                <!-- Verify lists -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content: User Management -->
+      <div id="content-users" class="space-y-4 hidden">
+        <h3 class="font-extrabold text-slate-900 dark:text-white text-lg">System Accounts</h3>
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-slate-500 dark:text-slate-400">
+              <thead class="bg-slate-50 dark:bg-slate-850/50 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th class="px-6 py-4">Name</th>
+                  <th class="px-6 py-4">Email</th>
+                  <th class="px-6 py-4">Account Type</th>
+                  <th class="px-6 py-4">Location</th>
+                  <th class="px-6 py-4 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody id="user-rows" class="divide-y divide-slate-100 dark:divide-slate-800">
+                <!-- User rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content: Feedback Logs -->
+      <div id="content-feedback" class="space-y-4 hidden">
+        <h3 class="font-extrabold text-slate-900 dark:text-white text-lg">Citizen Reviews</h3>
+        <div id="feedback-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Feedback logs -->
+        </div>
+      </div>
+
+    </div>
+  </mainv>
+
+  <div id="footer-container"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    let activeTab = 'analytics';
+    let summary = {};
+    let verifyQueue = [];
+    let usersList = [];
+    let feedbackList = [];
+    
+    let monthlyChart = null;
+    let distributionChart = null;
+
+
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await fetchAdminData();
+    });
+
+    async function fetchAdminData() {
+      try {
+        const analytics = await window.api.admin.getAnalytics();
+        summary = analytics.summary;
+        
+        // Load counters
+        document.getElementById('stat-total-users').innerText = summary.totalUsers;
+        document.getElementById('stat-total-reqs').innerText = summary.totalRequests;
+
+        // Render Charts
+        setupCharts(analytics.charts);
+
+        // Fetch requests for points verification
+        const allReqs = await window.api.admin.getAllRequests();
+        // Show completed or recycled requests that need point release verification
+        verifyQueue = allReqs.filter(r => r.status === 'completed' || r.status === 'recycled');
+        document.getElementById('verify-count').innerText = verifyQueue.length;
+        renderVerifyQueue();
+
+        // Fetch users list
+        usersList = await window.api.admin.getUsers();
+        renderUsersList();
+
+        // Fetch feedbacks
+        feedbackList = await window.api.admin.getFeedback();
+        renderFeedbackList();
+
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function switchTab(tab) {
+      activeTab = tab;
+      
+      const tabs = ['analytics', 'verify', 'users', 'feedback'];
+      for (const t of tabs) {
+        const btn = document.getElementById(`tab-${t}`);
+        const cnt = document.getElementById(`content-${t}`);
+        
+        if (t === tab) {
+          btn.className = "pb-3 text-sm font-extrabold border-b-2 border-emerald-500 text-emerald-600 dark:text-emerald-400";
+          cnt.classList.remove('hidden');
+        } else {
+          btn.className = "pb-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-850 dark:hover:text-slate-205 transition-all";
+          cnt.classList.add('hidden');
+        }
+      }
+    }
+
+    function setupCharts(chartsData) {
+      // Monthly Chart
+      const monthlyCtx = document.getElementById('chart-monthly').getContext('2d');
+      if (monthlyChart) monthlyChart.destroy();
+      
+      const monthlyLabels = chartsData.monthlyCollection.map(c => c.month);
+      const monthlyWeights = chartsData.monthlyCollection.map(c => c.weight);
+
+      // Simple Tailwind Emerald hex values
+      const isDark = document.documentElement.classList.contains('dark');
+      const textColor = isDark ? '#94a3b8' : '#64748b';
+      const gridColor = isDark ? '#334155' : '#f1f5f9';
+
+      monthlyChart = new Chart(monthlyCtx, {
+        type: 'bar',
+        data: {
+          labels: monthlyLabels,
+          datasets: [{
+            label: 'Plastic Recycled (kg)',
+            data: monthlyWeights,
+            backgroundColor: '#10b981',
+            borderRadius: 8,
+            hoverBackgroundColor: '#059669'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: textColor, font: { family: 'Outfit' } }
+            },
+            y: {
+              grid: { color: gridColor },
+              ticks: { color: textColor, font: { family: 'Outfit' } }
+            }
+          }
+        }
+      });
+
+      // Distribution Chart
+      const distCtx = document.getElementById('chart-distribution').getContext('2d');
+      if (distributionChart) distributionChart.destroy();
+
+      const distLabels = chartsData.wasteTypeDistribution.map(d => d.name);
+      const distValues = chartsData.wasteTypeDistribution.map(d => d.value);
+
+      distributionChart = new Chart(distCtx, {
+        type: 'doughnut',
+        data: {
+          labels: distLabels,
+          datasets: [{
+            data: distValues,
+            backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#f43f5e'],
+            borderWidth: 2,
+            borderColor: isDark ? '#0f172a' : '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: textColor,
+                font: { family: 'Outfit', size: 10, weight: 'bold' },
+                padding: 15
+              }
+            }
+          },
+          cutout: '65%'
+        }
+      });
+    }
+
+    // Re-trigger charts setup on dark mode toggle
+    window.addEventListener('themechange', () => {
+      if (summary.totalUsers) {
+        fetchAdminData();
+      }
+    });
+
+    function renderVerifyQueue() {
+      const container = document.getElementById('verify-rows');
+      if (verifyQueue.length === 0) {
+        container.innerHTML = `
+          <tr>
+            <td colspan="5" class="px-6 py-8 text-center text-xs text-slate-450 font-medium">No point release actions pending in verification queue.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      container.innerHTML = verifyQueue.map(item => `
+        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-850/50 transition">
+          <td class="px-6 py-4 font-bold text-slate-800 dark:text-slate-200 text-xs">${item.citizenId?.name || item.citizen?.name || 'Citizen'}</td>
+          <td class="px-6 py-4 text-xs font-semibold">${item.wasteCategory}</td>
+          <td class="px-6 py-4 text-xs">${item.estimatedWeight} kg</td>
+          <td class="px-6 py-4 text-xs text-slate-500">${item.recyclerId?.facilityName || item.recyclerId?.name || item.recyclingCenter?.recyclerDetails?.facilityName || item.recyclingCenter?.facilityName || item.recyclingCenter?.name || 'Facility'}</td>
+          <td class="px-6 py-4 text-center">
+            <button onclick="verifyRequest('${item._id}')" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-extrabold transition">
+              Verify & Release Points
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderUsersList() {
+      const container = document.getElementById('user-rows');
+      if (usersList.length === 0) {
+        container.innerHTML = `
+          <tr>
+            <td colspan="5" class="px-6 py-8 text-center text-xs text-slate-450">No users found.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      container.innerHTML = usersList.map(u => `
+        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-850/50 transition">
+          <td class="px-6 py-4 font-bold text-slate-800 dark:text-slate-200 text-xs flex items-center space-x-2">
+            <img src="${u.profilePicture || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=30&h=30&q=80'}" class="w-7 h-7 rounded-lg object-cover" />
+            <span>${u.name}</span>
+          </td>
+          <td class="px-6 py-4 text-xs font-medium">${u.email}</td>
+          <td class="px-6 py-4 text-xs">
+            <span class="px-2.5 py-0.5 rounded-full font-extrabold text-[9px] border uppercase ${
+              u.role === 'admin' ? 'bg-red-50 text-red-600 dark:bg-red-950/20 border-red-200' :
+              u.role === 'collector' ? 'bg-blue-50 text-blue-600 dark:bg-blue-950/20 border-blue-200' :
+              u.role === 'recycler' ? 'bg-purple-50 text-purple-600 dark:bg-purple-950/20 border-purple-200' :
+              'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20 border-emerald-200'
+            }">
+              ${u.role}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-xs text-slate-500">${u.area || ''}, ${u.city || ''}</td>
+          <td class="px-6 py-4 text-center">
+            ${u.role !== 'admin' ? `
+              <button onclick="deleteUser('${u._id}')" class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition border border-transparent hover:border-red-100">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            ` : '<span class="text-xs text-slate-350 font-bold">-</span>'}
+          </td>
+        </tr>
+      `).join('');
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function renderFeedbackList() {
+      const container = document.getElementById('feedback-list');
+      if (feedbackList.length === 0) {
+        container.innerHTML = `<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl text-center text-xs text-slate-450 shadow-sm col-span-2">No citizen reviews submitted.</div>`;
+        return;
+      }
+
+      container.innerHTML = feedbackList.map(fb => {
+        let stars = '';
+        for (let i = 1; i <= 5; i++) {
+          stars += `<i data-lucide="star" class="w-4.5 h-4.5 ${i <= fb.rating ? 'text-yellow-500 fill-yellow-500' : 'text-slate-300'}"></i>`;
+        }
+        const requestId = fb.requestId || fb.request?._id || '';
+        return `
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm space-y-3">
+            <div class="flex justify-between items-center">
+              <div>
+                <div class="font-bold text-slate-800 dark:text-white text-xs">${fb.citizenId?.name || fb.citizen?.name || 'Citizen'}</div>
+                <div class="text-[9px] text-slate-450 mt-0.5">Rating for dispatch: #${requestId.slice(-8) || 'N/A'}</div>
+              </div>
+              <div class="flex items-center space-x-0.5">${stars}</div>
+            </div>
+            <p class="text-xs text-slate-600 dark:text-slate-400 italic">"${fb.comment || 'No comments provided'}"</p>
+          </div>
+        `;
+      }).join('');
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    async function verifyRequest(id) {
+      try {
+        const token = window.auth.getToken();
+        const response = await fetch(`http://localhost:5000/api/admin/requests/${id}/verify`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Verification failed');
+        alert('Complaint verified and closed! Rewards successfully released to Citizen.');
+        await fetchAdminData();
+      } catch (err) {
+        alert(err.message || 'Verification failed.');
+      }
+    }
+
+    async function deleteUser(id) {
+      if (!window.confirm('Are you sure you want to permanently delete this user account?')) return;
+      try {
+        await window.api.admin.deleteUser(id);
+        alert('User deleted.');
+        await fetchAdminData();
+      } catch (err) {
+        alert(err.message || 'Deletion failed.');
+      }
+    }
+  </script>
+</body>
+</html>

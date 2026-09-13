@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eco Leaderboard - EcoCycle</title>
+  <script>
+    // Leaderboard page removed by user request - redirect to index.html
+    window.location.href = 'index.html';
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            slate: {
+              350: '#b2c1d3',
+              450: '#8ca1b9',
+              655: '#4b5e78',
+              850: '#1e293b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Outfit', 'Inter', sans-serif;
+    }
+    .fade-in {
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-150 transition-colors duration-200">
+  <div id="navbar-container"></div>
+  
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-2xl mx-auto space-y-8 py-4 fade-in">
+      
+      <!-- Header Banner -->
+      <div class="bg-gradient-to-tr from-emerald-500/10 via-emerald-500/5 to-transparent dark:from-emerald-950/20 p-6 sm:p-8 rounded-3xl text-center border border-slate-200 dark:border-slate-800/40 relative overflow-hidden space-y-3">
+        <div class="inline-flex p-3 bg-yellow-500/10 rounded-2xl text-yellow-500 animate-pulse">
+          <i data-lucide="trophy" class="w-8 h-8"></i>
+        </div>
+        <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white">EcoCycle Contributor Leaderboard</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+          Honoring the top citizens who have recycled the most plastic waste and earned environmental reward points.
+        </p>
+      </div>
+
+      <!-- Top 3 Spotlight Cards -->
+      <div id="podium-container" class="grid grid-cols-3 gap-4 items-end pt-4 hidden">
+        <!-- Spotlight Rank 2 -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl text-center shadow-sm flex flex-col items-center space-y-2 h-[160px] justify-center relative">
+          <div class="absolute top-2 left-2" id="rank2-icon"></div>
+          <img id="rank2-pic" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&h=80&q=80" class="w-12 h-12 rounded-full object-cover ring-2 ring-slate-200 dark:ring-slate-700" />
+          <div id="rank2-name" class="font-extrabold text-xs text-slate-800 dark:text-white truncate w-full">Citizen</div>
+          <div id="rank2-points" class="text-[11px] font-extrabold text-emerald-500">+0 pts</div>
+        </div>
+        
+        <!-- Spotlight Rank 1 -->
+        <div class="bg-white dark:bg-slate-900 border-2 border-emerald-500 p-5 rounded-3xl text-center shadow-md flex flex-col items-center space-y-2 h-[180px] justify-center relative scale-105">
+          <div class="absolute top-2 left-2" id="rank1-icon"></div>
+          <img id="rank1-pic" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&h=80&q=80" class="w-14 h-14 rounded-full object-cover ring-2 ring-emerald-500" />
+          <div id="rank1-name" class="font-extrabold text-sm text-slate-800 dark:text-white truncate w-full">Citizen</div>
+          <div id="rank1-points" class="text-xs font-extrabold text-emerald-500">+0 pts</div>
+        </div>
+
+        <!-- Spotlight Rank 3 -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl text-center shadow-sm flex flex-col items-center space-y-2 h-[155px] justify-center relative">
+          <div class="absolute top-2 left-2" id="rank3-icon"></div>
+          <img id="rank3-pic" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&h=80&q=80" class="w-12 h-12 rounded-full object-cover ring-2 ring-slate-200 dark:ring-slate-700" />
+          <div id="rank3-name" class="font-extrabold text-xs text-slate-800 dark:text-white truncate w-full">Citizen</div>
+          <div id="rank3-points" class="text-[11px] font-extrabold text-emerald-500">+0 pts</div>
+        </div>
+      </div>
+
+      <!-- Leaderboard Table List -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm">
+        <div id="leaderboard-rows" class="divide-y divide-slate-100 dark:divide-slate-800">
+          <div class="p-6 text-center text-xs text-slate-400">Loading leaderboard logs...</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <div id="footer-container"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      await fetchLeaderboard();
+    });
+
+    async function fetchLeaderboard() {
+      const rowsContainer = document.getElementById('leaderboard-rows');
+      try {
+        const leaders = await window.api.auth.getLeaderboard();
+
+        if (leaders.length === 0) {
+          rowsContainer.innerHTML = `<div class="p-6 text-center text-xs text-slate-400">No leaderboard logs to display.</div>`;
+          return;
+        }
+
+        // Render Spotlight (Top 3)
+        if (leaders.length >= 3) {
+          document.getElementById('rank1-name').innerText = leaders[0].name.split(' ')[0];
+          document.getElementById('rank1-points').innerText = `+${leaders[0].rewards.points} pts`;
+          if (leaders[0].profilePicture) document.getElementById('rank1-pic').src = leaders[0].profilePicture;
+          document.getElementById('rank1-icon').innerHTML = `<i data-lucide="trophy" class="w-6 h-6 text-yellow-500 fill-yellow-400"></i>`;
+
+          document.getElementById('rank2-name').innerText = leaders[1].name.split(' ')[0];
+          document.getElementById('rank2-points').innerText = `+${leaders[1].rewards.points} pts`;
+          if (leaders[1].profilePicture) document.getElementById('rank2-pic').src = leaders[1].profilePicture;
+          document.getElementById('rank2-icon').innerHTML = `<i data-lucide="medal" class="w-6 h-6 text-slate-400 fill-slate-300"></i>`;
+
+          document.getElementById('rank3-name').innerText = leaders[2].name.split(' ')[0];
+          document.getElementById('rank3-points').innerText = `+${leaders[2].rewards.points} pts`;
+          if (leaders[2].profilePicture) document.getElementById('rank3-pic').src = leaders[2].profilePicture;
+          document.getElementById('rank3-icon').innerHTML = `<i data-lucide="medal" class="w-6 h-6 text-amber-600 fill-amber-500"></i>`;
+
+          document.getElementById('podium-container').classList.remove('hidden');
+        }
+
+        // Render Table list
+        rowsContainer.innerHTML = leaders.map((leader, index) => {
+          let rankHtml = `<span class="font-extrabold text-sm text-slate-400 w-6 text-center">${index + 1}</span>`;
+          if (index === 0) rankHtml = `<i data-lucide="trophy" class="w-6 h-6 text-yellow-500 fill-yellow-400"></i>`;
+          else if (index === 1) rankHtml = `<i data-lucide="medal" class="w-6 h-6 text-slate-400 fill-slate-300"></i>`;
+          else if (index === 2) rankHtml = `<i data-lucide="medal" class="w-6 h-6 text-amber-600 fill-amber-500"></i>`;
+
+          const pic = leader.profilePicture || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=50&h=50&q=80';
+
+          return `
+            <div class="p-4 flex items-center justify-between transition hover:bg-slate-50/50 dark:hover:bg-slate-850">
+              <div class="flex items-center space-x-4">
+                <!-- Rank -->
+                <div class="w-6 flex items-center justify-center">
+                  ${rankHtml}
+                </div>
+
+                <!-- Avatar -->
+                <img src="${pic}" alt="" class="w-9 h-9 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-800" />
+
+                <!-- Name & Details -->
+                <div>
+                  <div class="font-bold text-slate-800 dark:text-slate-200 text-xs">${leader.name}</div>
+                  <span class="text-[10px] text-slate-400">${leader.area || ''}, ${leader.city || ''}</span>
+                </div>
+              </div>
+
+              <!-- Status Points -->
+              <div class="flex items-center text-right">
+                <span class="font-extrabold text-emerald-500 text-xs">
+                  ${leader.rewards.points} pts
+                </span>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        if (window.lucide) window.lucide.createIcons();
+
+      } catch (err) {
+        console.error(err);
+        rowsContainer.innerHTML = `<div class="p-6 text-center text-xs text-red-500 font-semibold">Failed to fetch leaderboard logs.</div>`;
+      }
+    }
+  </script>
+</body>
+</html>

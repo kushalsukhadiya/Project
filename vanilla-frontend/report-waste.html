@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report Plastic Waste - EcoCycle</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            slate: {
+              350: '#b2c1d3',
+              450: '#8ca1b9',
+              655: '#4b5e78',
+              850: '#1e293b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Outfit', 'Inter', sans-serif;
+    }
+    .fade-in {
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    /* Leaflet overrides */
+    .leaflet-container {
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      font-family: inherit;
+    }
+    .leaflet-marker-icon {
+      margin-left: 0 !important;
+      margin-top: 0 !important;
+    }
+  </style>
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-150 transition-colors duration-200">
+  <div id="navbar-container"></div>
+  
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-3xl mx-auto space-y-8 py-4 fade-in">
+      <div class="space-y-1">
+        <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white flex items-center space-x-2">
+          <i data-lucide="leaf" class="w-6 h-6 text-emerald-500"></i>
+          <span>Report Plastic Waste Collection</span>
+        </h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          Upload plastic details, estimate reward points, pin coordinates, and dispatch a collector.
+        </p>
+      </div>
+
+      <!-- Error Callout -->
+      <div id="error-callout" class="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-2xl flex items-center space-x-2 text-xs font-semibold text-red-600 dark:text-red-400 hidden">
+        <i data-lucide="alert-circle" class="w-5 h-5 flex-shrink-0"></i>
+        <span id="error-message"></span>
+      </div>
+
+      <form id="report-form" class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+        
+        <!-- Left 2 Cols: Form Fields -->
+        <div class="md:col-span-2 space-y-6 bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          
+          <!-- Image upload -->
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-slate-655 dark:text-slate-400">Upload Waste Photo (Triggers AI Scan Estimation)</label>
+            <div class="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-6 text-center cursor-pointer hover:border-emerald-500 dark:hover:border-emerald-500 transition relative">
+              <input type="file" id="image-file" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleImageFileChange(event)" />
+              <div class="space-y-2" id="upload-prompt">
+                <i data-lucide="upload" class="w-8 h-8 text-slate-400 mx-auto"></i>
+                <div class="text-xs text-slate-500">Click to upload photo, or drag and drop</div>
+                <div class="text-[10px] text-slate-400">Supports JPG, PNG up to 5MB</div>
+              </div>
+              <div class="hidden space-y-2" id="scanning-prompt">
+                <svg class="animate-spin h-8 w-8 text-emerald-500 mx-auto" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                <div class="text-xs font-bold text-emerald-600 dark:text-emerald-400">AI scanning plastic category type...</div>
+              </div>
+              <div class="hidden" id="upload-preview-container">
+                <img id="upload-preview" class="h-28 mx-auto object-cover rounded-xl" />
+                <div class="text-[10px] text-slate-450 mt-2" id="upload-filename"></div>
+              </div>
+            </div>
+            <div class="text-[10px] text-emerald-600 font-bold hidden" id="ai-confidence-box">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 inline"></i>
+              <span>AI Classifier Estimated: <span id="ai-est-category"></span> (Confidence: <span id="ai-confidence"></span>%)</span>
+            </div>
+          </div>
+
+          <!-- Category Selection -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-bold text-slate-655 dark:text-slate-400">Plastic Waste Category</label>
+            <select
+              id="category"
+              class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition text-slate-900 dark:text-white font-medium"
+              onchange="calculateImpact()"
+            >
+              <option value="PET Bottles">PET Bottles (Soft Drink/Water Bottles)</option>
+              <option value="Plastic Bottles">Plastic Bottles (Shampoo/Detergent)</option>
+              <option value="Industrial Plastic">Industrial Plastic (Crates/Drums)</option>
+              <option value="Food Packaging">Food Packaging (Wrappers/Sachets)</option>
+              <option value="Other">Other Plastics</option>
+            </select>
+          </div>
+
+          <!-- Weight -->
+          <!-- Hidden default weight -->
+          <input type="hidden" id="weight" value="5" />
+
+          <!-- Pickup Date -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-bold text-slate-655 dark:text-slate-400">Scheduled Pickup Date</label>
+            <div class="relative">
+              <i data-lucide="calendar" class="w-4 h-4 text-slate-400 absolute left-3.5 top-4"></i>
+              <input
+                type="date"
+                id="pickup-date"
+                required
+                class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl pl-10 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition text-slate-900 dark:text-white"
+              />
+            </div>
+          </div>
+
+          <!-- Location Picker Map -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <label class="text-xs font-bold text-slate-655 dark:text-slate-400">Specify Pickup Location (Drag pin or click map)</label>
+              <button
+                type="button"
+                id="locate-btn"
+                onclick="locateMe()"
+                class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-extrabold rounded-xl transition shadow-sm"
+              >
+                <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                <span>Locate Me</span>
+              </button>
+            </div>
+            <div class="flex flex-col h-72 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-inner bg-white dark:bg-slate-900 relative">
+              <div id="map-picker" class="h-60 w-full relative z-10"></div>
+              <div class="p-3 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 text-xs">
+                <div id="map-loading" class="flex items-center space-x-2 text-slate-500 dark:text-slate-400 hidden">
+                  <svg class="animate-spin h-3 w-3 text-emerald-500" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  <span>Retrieving address from map pin...</span>
+                </div>
+                <div id="map-address-box" class="leading-relaxed">
+                  <span class="font-semibold text-emerald-600 dark:text-emerald-400">Selected Pickup Address: </span>
+                  <span id="resolved-address" class="text-slate-700 dark:text-slate-300 font-medium">Loading default address...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Col: Impact Metrics & Dispatches -->
+        <div class="space-y-6">
+          
+
+
+          <!-- Closest Facility details -->
+          <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4" id="nearest-center-box" class="hidden">
+            <h4 class="font-extrabold text-xs text-slate-500 uppercase tracking-wider">Assigned Delivery Facility</h4>
+            <div class="flex items-center space-x-2 text-slate-800 dark:text-slate-200">
+              <i data-lucide="building" class="w-4 h-4 text-slate-400"></i>
+              <span class="text-xs font-bold" id="nearest-center-name">Goregaon Facility</span>
+            </div>
+            <div class="text-[10px] text-slate-400 flex items-center space-x-1">
+              <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-500"></i>
+              <span>Distance to center: <span id="nearest-center-dist">0</span> km</span>
+            </div>
+          </div>
+
+          <!-- Submit Buttons -->
+          <button
+            type="submit"
+            id="submit-btn"
+            class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold py-4 rounded-2xl text-xs transition shadow-lg shadow-emerald-500/20 flex items-center justify-center space-x-2"
+          >
+            <i data-lucide="leaf" class="w-4 h-4"></i>
+            <span>Dispatch Pickup Request</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </main>
+
+  <div id="footer-container"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    let latitude = 19.0760;
+    let longitude = 72.8777;
+    let address = 'Mumbai, Maharashtra, India';
+    
+    let leafletMap = null;
+    let marker = null;
+
+    const recyclingCenters = [
+      { name: 'GreenTech Recyclers Goregaon', lat: 19.1663, lng: 72.8480 },
+      { name: 'EcoSmart Facility Dharavi', lat: 19.0380, lng: 72.8538 },
+      { name: 'Mumbai Plastic Eco-Works Kurla', lat: 19.0726, lng: 72.8800 }
+    ];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Set tomorrow's date by default
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      document.getElementById('pickup-date').value = tomorrow.toISOString().split('T')[0];
+
+      calculateImpact();
+      initMap();
+    });
+
+    function calculateImpact() {}
+
+    function initMap() {
+      // Leaflet reset icon url overrides
+      delete L.Icon.Default.prototype._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+        iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+      });
+
+      leafletMap = L.map('map-picker').setView([latitude, longitude], 12);
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(leafletMap);
+
+      marker = L.marker([latitude, longitude], { draggable: true }).addTo(leafletMap);
+
+      // Initial reverse geocode
+      reverseGeocode(latitude, longitude);
+
+      marker.on('dragend', () => {
+        const position = marker.getLatLng();
+        latitude = position.lat;
+        longitude = position.lng;
+        reverseGeocode(latitude, longitude);
+      });
+
+      leafletMap.on('click', (event) => {
+        const position = event.latlng;
+        latitude = position.lat;
+        longitude = position.lng;
+        marker.setLatLng(position);
+        reverseGeocode(latitude, longitude);
+      });
+    }
+
+    function locateMe() {
+      const locateBtn = document.getElementById('locate-btn');
+      const originalText = locateBtn.innerHTML;
+      locateBtn.disabled = true;
+      locateBtn.innerHTML = `
+        <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+        <span>Locating...</span>
+      `;
+
+      if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser.');
+        locateBtn.disabled = false;
+        locateBtn.innerHTML = originalText;
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          latitude = position.coords.latitude;
+          longitude = position.coords.longitude;
+          
+          if (leafletMap && marker) {
+            leafletMap.setView([latitude, longitude], 14);
+            marker.setLatLng([latitude, longitude]);
+            reverseGeocode(latitude, longitude);
+          }
+          locateBtn.disabled = false;
+          locateBtn.innerHTML = originalText;
+          if (window.lucide) window.lucide.createIcons();
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          alert('Could not retrieve your location. Please select it manually on the map.');
+          locateBtn.disabled = false;
+          locateBtn.innerHTML = originalText;
+          if (window.lucide) window.lucide.createIcons();
+        }
+      );
+    }
+
+    async function reverseGeocode(lat, lng) {
+      const mapLoading = document.getElementById('map-loading');
+      const mapAddressBox = document.getElementById('map-address-box');
+      
+      mapLoading.classList.remove('hidden');
+      mapAddressBox.classList.add('hidden');
+
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+          headers: { 'Accept-Language': 'en' }
+        });
+        const data = await res.json();
+        address = data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      } catch (err) {
+        console.error('Reverse geocode failed:', err);
+        address = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      } finally {
+        document.getElementById('resolved-address').innerText = address;
+        mapLoading.classList.add('hidden');
+        mapAddressBox.classList.remove('hidden');
+      }
+
+      calculateNearestCenter(lat, lng);
+    }
+
+    function calculateNearestCenter(lat, lng) {
+      let closestIdx = 0;
+      let minDistance = Infinity;
+
+      recyclingCenters.forEach((center, idx) => {
+        const R = 6371; // Earth radius in km
+        const dLat = (center.lat - lat) * (Math.PI / 180);
+        const dLng = (center.lng - lng) * (Math.PI / 180);
+        const a = 
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(lat * (Math.PI / 180)) * Math.cos(center.lat * (Math.PI / 180)) * 
+          Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c;
+
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestIdx = idx;
+        }
+      });
+
+      document.getElementById('nearest-center-name').innerText = recyclingCenters[closestIdx].name;
+      document.getElementById('nearest-center-dist').innerText = minDistance.toFixed(1);
+    }
+
+    async function handleImageFileChange(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const uploadPrompt = document.getElementById('upload-prompt');
+      const scanningPrompt = document.getElementById('scanning-prompt');
+      const previewContainer = document.getElementById('upload-preview-container');
+      const previewImage = document.getElementById('upload-preview');
+      const filename = document.getElementById('upload-filename');
+      const aiConfidenceBox = document.getElementById('ai-confidence-box');
+      const errorCallout = document.getElementById('error-callout');
+
+      errorCallout.classList.add('hidden');
+      aiConfidenceBox.classList.add('hidden');
+      uploadPrompt.classList.add('hidden');
+      scanningPrompt.classList.remove('hidden');
+
+      // Setup preview
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        previewImage.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+      filename.innerText = file.name;
+
+      const formData = new FormData();
+      formData.append('image', file);
+
+      try {
+        const res = await window.api.requests.classifyImage(formData);
+        
+        // Auto set category and display confidence
+        document.getElementById('category').value = res.estimatedCategory;
+        calculateImpact();
+
+        document.getElementById('ai-est-category').innerText = res.estimatedCategory;
+        document.getElementById('ai-confidence').innerText = Math.round(res.confidence * 100);
+        aiConfidenceBox.classList.remove('hidden');
+
+      } catch (err) {
+        console.error(err);
+        document.getElementById('error-message').innerText = 'AI scanner had trouble classifying. You can still select manually.';
+        errorCallout.classList.remove('hidden');
+      } finally {
+        scanningPrompt.classList.add('hidden');
+        previewContainer.classList.remove('hidden');
+        if (window.lucide) window.lucide.createIcons();
+      }
+    }
+
+    document.getElementById('report-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const category = document.getElementById('category').value;
+      const weight = document.getElementById('weight').value;
+      const pickupDate = document.getElementById('pickup-date').value;
+      const fileInput = document.getElementById('image-file');
+      
+      const errorCallout = document.getElementById('error-callout');
+      const errorMessage = document.getElementById('error-message');
+      const submitBtn = document.getElementById('submit-btn');
+
+      errorCallout.classList.add('hidden');
+
+      if (!address || !latitude || !longitude) {
+        errorMessage.innerText = 'Please select a valid coordinate location on the map.';
+        errorCallout.classList.remove('hidden');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Dispatching request...';
+
+      const formData = new FormData();
+      formData.append('wasteCategory', category);
+      formData.append('estimatedWeight', weight);
+      formData.append('pickupDate', pickupDate);
+      formData.append('address', address);
+      formData.append('latitude', latitude);
+      formData.append('longitude', longitude);
+
+      if (fileInput.files.length > 0) {
+        formData.append('image', fileInput.files[0]);
+      }
+
+      try {
+        await window.api.requests.create(formData);
+        window.location.href = 'citizen.html';
+      } catch (err) {
+        errorMessage.innerText = err.message || 'Failed to submit report request.';
+        errorCallout.classList.remove('hidden');
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Dispatch Pickup Request';
+        if (window.lucide) window.lucide.createIcons();
+      }
+    });
+  </script>
+</body>
+</html>

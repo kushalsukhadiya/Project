@@ -7,7 +7,7 @@ import { upload } from '../middleware/upload';
 const router = Router();
 
 router.use(authenticateToken);
-router.use(authorizeRoles(['collector']));
+router.use(authorizeRoles(['collector', 'admin', 'municipal']));
 
 router.put('/availability', toggleAvailability);
 router.get('/jobs/pending', listPendingJobs);

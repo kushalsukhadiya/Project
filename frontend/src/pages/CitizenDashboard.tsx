@@ -5,8 +5,8 @@ import { api } from '../services/api';
 import { PlasticRequest } from '../types';
 import { SkeletonDashboardStats, SkeletonList } from '../components/SkeletonLoader';
 import { 
-  Plus, Calendar, Trash2, Star, CheckCircle2, 
-  Clock, AlertCircle, ArrowUpRight, Award
+  Plus, Calendar, Trash2, Star, CheckCircle2,
+  AlertCircle, ArrowUpRight
 } from 'lucide-react';
 
 export const CitizenDashboard: React.FC = () => {
@@ -28,6 +28,9 @@ export const CitizenDashboard: React.FC = () => {
     try {
       const data = await api.requests.myRequests();
       setRequests(data);
+      if (data.length > 0) {
+        setSelectedRequest(data[0]);
+      }
     } catch (err) {
       console.error('Failed to load citizen requests:', err);
     } finally {
@@ -70,33 +73,23 @@ export const CitizenDashboard: React.FC = () => {
 
   // Status-styling helper
   const getStatusBadge = (status: PlasticRequest['status']) => {
-    const badges = {
+    const badges: Record<string, string> = {
       pending: 'bg-red-50 text-red-600 dark:bg-red-950/20 dark:text-red-400 border border-red-200 dark:border-red-800',
-      accepted: 'bg-blue-50 text-blue-600 dark:bg-blue-950/20 dark:text-blue-400 border border-blue-200 dark:border-blue-800',
-      picked_up: 'bg-yellow-50 text-yellow-600 dark:bg-yellow-950/20 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800',
-      received: 'bg-purple-50 text-purple-600 dark:bg-purple-950/20 dark:text-purple-400 border border-purple-200 dark:border-purple-800',
-      recycled: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800',
-      cancelled: 'bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
+      reminder_sent: 'bg-amber-50 text-amber-600 dark:bg-amber-950/20 dark:text-amber-400 border border-amber-200 dark:border-amber-800',
+      assigned_municipality: 'bg-blue-50 text-blue-600 dark:bg-blue-950/20 dark:text-blue-400 border border-blue-200 dark:border-blue-800',
+      escalated: 'bg-yellow-50 text-yellow-600 dark:bg-yellow-950/20 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800',
+      assigned_ngo: 'bg-purple-50 text-purple-600 dark:bg-purple-950/20 dark:text-purple-400 border border-purple-200 dark:border-purple-800',
+      in_progress: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-950/20 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-800',
+      completed: 'bg-teal-50 text-teal-600 dark:bg-teal-950/20 dark:text-teal-400 border border-teal-200 dark:border-teal-800',
+      verified: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800',
+      closed: 'bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700',
+      rejected: 'bg-red-50 text-red-600 dark:bg-red-950/20 dark:text-red-400 border border-red-200 dark:border-red-800',
+      duplicate: 'bg-slate-100 text-slate-500 border border-slate-200 dark:border-slate-800'
     };
     return badges[status] || badges.pending;
   };
 
-  // Points progress calculator
-  const getNextTierPoints = (points: number) => {
-    if (points < 300) return { next: 'Silver', required: 300, progress: (points / 300) * 100 };
-    if (points < 800) return { next: 'Gold', required: 800, progress: ((points - 300) / 500) * 100 };
-    if (points < 1500) return { next: 'Platinum', required: 1500, progress: ((points - 800) / 700) * 100 };
-    return { next: 'MAX', required: 1500, progress: 100 };
-  };
 
-  const nextTier = getNextTierPoints(user?.rewards?.points || 0);
-
-  // Statistics counters
-  const totalReportsCount = requests.length;
-  const completedCount = requests.filter(r => r.status === 'recycled').length;
-  const totalWeightRecycled = requests
-    .filter(r => r.status === 'recycled')
-    .reduce((sum, r) => sum + r.estimatedWeight, 0);
 
   if (loading) {
     return (
@@ -126,69 +119,7 @@ export const CitizenDashboard: React.FC = () => {
         </Link>
       </div>
 
-      {/* Rewards Progress and Metric Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Rewards Status Card */}
-        <div className="bg-gradient-to-tr from-emerald-500 to-emerald-600 dark:from-emerald-600 dark:to-emerald-850 p-6 rounded-3xl text-white shadow-lg lg:col-span-2 relative overflow-hidden flex flex-col justify-between min-h-[180px]">
-          <div className="absolute top-0 right-0 p-8 opacity-10 animate-slow-spin">
-            <Award size={120} />
-          </div>
-          <div className="flex justify-between items-start relative z-10">
-            <div>
-              <span className="text-[10px] uppercase font-bold tracking-widest opacity-80">Eco Rewards Status</span>
-              <div className="text-4xl font-extrabold mt-1">{user?.rewards?.points || 0} <span className="text-lg">pts</span></div>
-            </div>
-            <div className="bg-white/20 px-3 py-1.5 rounded-xl text-xs font-bold border border-white/20">
-              {user?.rewards?.tier || 'Bronze'} Tier
-            </div>
-          </div>
-          
-          <div className="mt-6 relative z-10">
-            {nextTier.next !== 'MAX' ? (
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs font-bold opacity-90">
-                  <span>Progress to {nextTier.next} Tier</span>
-                  <span>{user?.rewards?.points || 0} / {nextTier.required} pts</span>
-                </div>
-                <div className="w-full bg-white/20 rounded-full h-2">
-                  <div 
-                    className="bg-white rounded-full h-2 transition-all duration-500" 
-                    style={{ width: `${nextTier.progress}%` }}
-                  ></div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-xs font-bold opacity-95 flex items-center space-x-1.5">
-                <Star className="w-4 h-4 text-yellow-300 fill-yellow-300" />
-                <span>You have unlocked the highest Platinum Eco Legend tier!</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Small Metrics Cards */}
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-1">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm">
-            <div className="text-[10px] uppercase font-bold text-slate-400">Total Weight Recycled</div>
-            <div className="text-2xl font-extrabold text-slate-800 dark:text-white mt-2">{totalWeightRecycled.toFixed(1)} kg</div>
-            <div className="text-[10px] text-slate-400 mt-1 flex items-center space-x-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-              <span>Verified completed pickups</span>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm">
-            <div className="text-[10px] uppercase font-bold text-slate-400">Active Requests</div>
-            <div className="text-2xl font-extrabold text-slate-800 dark:text-white mt-2">
-              {requests.filter(r => r.status !== 'recycled' && r.status !== 'cancelled').length}
-            </div>
-            <div className="text-[10px] text-slate-400 mt-1 flex items-center space-x-1">
-              <Clock className="w-3.5 h-3.5 text-blue-500" />
-              <span>En route or pending collection</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <div className="mt-4" />
 
       {/* Main Request Logs Container */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -290,44 +221,65 @@ export const CitizenDashboard: React.FC = () => {
 
               {/* Status Timeline */}
               <div className="space-y-6 relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-150 dark:before:bg-slate-800">
-                {[
-                  { status: 'pending', title: 'Submitted', desc: 'Waste reported and pending collector assignment.' },
-                  { status: 'accepted', title: 'Assigned', desc: 'Collector accepted request and is dispatched.' },
-                  { status: 'picked_up', title: 'Collected', desc: 'Plastic picked up. Transferred to recycling facility.' },
-                  { status: 'received', title: 'Arrived', desc: 'Recycling center confirmed receipt of shipment.' },
-                  { status: 'recycled', title: 'Completed & Verified', desc: 'Recycled! Points credited to your account.' }
-                ].map((step, idx) => {
-                  const stepIndexInHistory = selectedRequest.history.findIndex(h => h.status === step.status);
-                  const isDone = stepIndexInHistory !== -1;
-                  const stepHistory = isDone ? selectedRequest.history[stepIndexInHistory] : null;
+                {(() => {
+                  const baseSteps = [
+                    { status: 'pending', title: 'Submitted', desc: 'Waste complaint reported by Citizen.' }
+                  ];
 
-                  return (
-                    <div key={idx} className="flex space-x-4 relative z-10">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${
-                        isDone 
-                          ? 'bg-emerald-500 border-emerald-500 text-white' 
-                          : 'bg-white dark:bg-slate-900 border-slate-250 dark:border-slate-750 text-slate-400'
-                      }`}>
-                        {isDone ? (
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                        ) : (
-                          <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700" />
-                        )}
-                      </div>
-                      <div className="space-y-0.5">
-                        <span className={`text-xs font-bold ${isDone ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-600'}`}>
-                          {step.title}
-                        </span>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">{step.desc}</p>
-                        {stepHistory && (
-                          <span className="text-[10px] text-slate-400 block pt-1">
-                            {new Date(stepHistory.updatedAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                  if (selectedRequest.history.some(h => h.status === 'reminder_sent')) {
+                    baseSteps.push({ status: 'reminder_sent', title: 'Reminder Sent', desc: 'No response in 48h. Warning issued.' });
+                  }
+                  if (selectedRequest.history.some(h => h.status === 'escalated')) {
+                    baseSteps.push({ status: 'escalated', title: 'Escalated to NGO', desc: 'Escalated to registered NGOs.' });
+                  }
+
+                  if (selectedRequest.history.some(h => h.status === 'assigned_municipality')) {
+                    baseSteps.push({ status: 'assigned_municipality', title: 'Assigned to Municipality', desc: 'Municipal crew claimed responsibility.' });
+                  } else if (selectedRequest.history.some(h => h.status === 'assigned_ngo')) {
+                    baseSteps.push({ status: 'assigned_ngo', title: 'Assigned to NGO', desc: 'NGO crew claimed responsibility.' });
+                  } else {
+                    baseSteps.push({ status: 'assigned_municipality', title: 'Assigned', desc: 'Assigned to cleanup crew.' });
+                  }
+
+                  baseSteps.push(
+                    { status: 'in_progress', title: 'In Progress', desc: 'Cleanup crew currently resolving issue.' },
+                    { status: 'completed', title: 'Completed', desc: 'Waste cleared. Awaiting Admin verification.' },
+                    { status: 'closed', title: 'Closed & Verified', desc: 'Admin verified and closed complaint.' }
                   );
-                })}
+
+                  return baseSteps.map((step, idx) => {
+                    const stepIndexInHistory = selectedRequest.history.findIndex(h => h.status === step.status);
+                    const isDone = stepIndexInHistory !== -1;
+                    const stepHistory = isDone ? selectedRequest.history[stepIndexInHistory] : null;
+
+                    return (
+                      <div key={idx} className="flex space-x-4 relative z-10">
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${
+                          isDone 
+                            ? 'bg-emerald-500 border-emerald-500 text-white' 
+                            : 'bg-white dark:bg-slate-900 border-slate-250 dark:border-slate-750 text-slate-400'
+                        }`}>
+                          {isDone ? (
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                          ) : (
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700" />
+                          )}
+                        </div>
+                        <div className="space-y-0.5">
+                          <span className={`text-xs font-bold ${isDone ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-650'}`}>
+                            {step.title}
+                          </span>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">{step.desc}</p>
+                          {stepHistory && (
+                            <span className="text-[10px] text-slate-400 block pt-1">
+                              {new Date(stepHistory.updatedAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
 
               {/* Collector / Proof Section */}

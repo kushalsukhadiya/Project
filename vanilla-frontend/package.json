@@ -1,0 +1,8 @@
+{
+  "name": "vanilla-frontend",
+  "version": "1.0.0",
+  "description": "EcoCycle HTML, CSS, and JS static frontend prototype",
+  "scripts": {
+    "dev": "npx -y serve -l 3000 ."
+  }
+}

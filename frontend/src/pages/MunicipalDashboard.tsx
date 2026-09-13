@@ -8,8 +8,8 @@ import {
   Trash2, ShieldCheck, Navigation, Award, DollarSign, Camera, AlertCircle
 } from 'lucide-react';
 
-export const CollectorDashboard: React.FC = () => {
-  // Collector profile metrics
+export const MunicipalDashboard: React.FC = () => {
+  // Municipal profile metrics (reuses collectorDetails structure)
   const [stats, setStats] = useState({
     availability: false,
     earnings: 0,
@@ -46,9 +46,6 @@ export const CollectorDashboard: React.FC = () => {
       setPendingJobs(jobsData);
 
       // Fetch all recyclers for complete-job dropdown
-      const usersList = await api.auth.getLeaderboard(); // leaderboard gets citizens, we need a list of recyclers
-      // We can fetch recyclers by hitting our custom API or query all users
-      // Let's call a fetch directly to /api/auth/me/../recyclers (or write fallback mock)
       const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:5000/api/auth/recyclers', {
         headers: { Authorization: `Bearer ${token}` }
@@ -60,12 +57,12 @@ export const CollectorDashboard: React.FC = () => {
       } else {
         // Fallback standard recycler details
         setRecyclers([
-          { _id: 'recycler_fallback_id', name: 'GreenTech Recycling Center', role: 'recycler', email: 'recycler@ecocycle.com', profilePicture: '', phoneNumber: '', address: '', city: 'Mumbai', area: 'Goregaon' }
+          { _id: 'recycler_fallback_id', name: 'GreenTech Recycling Center', role: 'recycler', email: 'recycler@ecocycle.com', profilePicture: '', phoneNumber: '', address: '', city: 'Mumbai', area: 'Goregaon' } as any
         ]);
         setSelectedRecyclerId('recycler_fallback_id');
       }
     } catch (err) {
-      console.error('Failed to load collector dashboard:', err);
+      console.error('Failed to load municipal dashboard:', err);
     } finally {
       setLoading(false);
     }
@@ -88,7 +85,7 @@ export const CollectorDashboard: React.FC = () => {
   const handleAcceptJob = async (id: string) => {
     try {
       await api.collector.acceptJob(id);
-      alert('Job accepted! It is added to your active jobs list.');
+      alert('Job claimed successfully! Added to your active jobs list.');
       fetchDashboardData();
     } catch (err: any) {
       alert(err.message || 'Accept failed.');
@@ -134,7 +131,7 @@ export const CollectorDashboard: React.FC = () => {
       formData.append('pickupProofImage', proofImage);
 
       await api.collector.pickupJob(completingJob!._id, formData);
-      alert('Job complete! Delivered to recycler queue. Added pay to earnings.');
+      alert('Job resolved! Delivered to recycler queue.');
       setCompletingJob(null);
       setProofImage(null);
       setMockProofUrl('');
@@ -160,21 +157,21 @@ export const CollectorDashboard: React.FC = () => {
       {/* Welcome Banner */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 sm:p-8 rounded-3xl gap-4 shadow-sm">
         <div>
-          <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">Collector Portal</h2>
+          <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">Municipal Officer Portal</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Collect and resolve reported plastic waste complaints near you.
+            View active waste bin complaints and claim/resolve reported problems.
           </p>
         </div>
       </div>
 
-      {/* Collector Stats Cards */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl flex items-center space-x-5 shadow-sm">
           <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-500">
             <DollarSign className="w-8 h-8" />
           </div>
           <div>
-            <div className="text-[10px] uppercase font-bold text-slate-450">My Earnings</div>
+            <div className="text-[10px] uppercase font-bold text-slate-455">Municipal Budget Earnings</div>
             <div className="text-2xl font-extrabold text-slate-800 dark:text-white mt-1">₹{stats.earnings}</div>
           </div>
         </div>
@@ -184,7 +181,7 @@ export const CollectorDashboard: React.FC = () => {
             <CheckCircle className="w-8 h-8" />
           </div>
           <div>
-            <div className="text-[10px] uppercase font-bold text-slate-450">Completed Jobs Today</div>
+            <div className="text-[10px] uppercase font-bold text-slate-455">Resolved Today</div>
             <div className="text-2xl font-extrabold text-slate-800 dark:text-white mt-1">{stats.completedJobsToday}</div>
           </div>
         </div>
@@ -194,7 +191,7 @@ export const CollectorDashboard: React.FC = () => {
             <Award className="w-8 h-8" />
           </div>
           <div>
-            <div className="text-[10px] uppercase font-bold text-slate-450">Total Career Collections</div>
+            <div className="text-[10px] uppercase font-bold text-slate-455">Total Collections</div>
             <div className="text-2xl font-extrabold text-slate-800 dark:text-white mt-1">{stats.totalCompletedJobs}</div>
           </div>
         </div>
@@ -212,10 +209,10 @@ export const CollectorDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         {/* Active accepted jobs */}
         <div className="space-y-4">
-          <h3 className="font-extrabold text-slate-900 dark:text-white text-lg">Active Jobs Queue ({activeJobs.length})</h3>
+          <h3 className="font-extrabold text-slate-900 dark:text-white text-lg">My Active Jobs ({activeJobs.length})</h3>
           {activeJobs.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 rounded-3xl p-10 text-center text-xs text-slate-500 shadow-sm">
-              You are not assigned to any active jobs. Accept a job from the public list.
+              No active jobs assigned to you. Claim an available job from the queue.
             </div>
           ) : (
             <div className="space-y-4">
@@ -232,7 +229,7 @@ export const CollectorDashboard: React.FC = () => {
                     </span>
                   </div>
 
-                  <div className="text-xs text-slate-600 dark:text-slate-350 space-y-2 border-t border-slate-100 dark:border-slate-800 pt-3">
+                  <div className="text-xs text-slate-655 dark:text-slate-350 space-y-2 border-t border-slate-100 dark:border-slate-800 pt-3">
                     <div className="flex items-start space-x-2">
                       <MapPin className="w-4 h-4 text-slate-450 flex-shrink-0 mt-0.5" />
                       <span>{job.location.address}</span>
@@ -245,7 +242,7 @@ export const CollectorDashboard: React.FC = () => {
                       className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs py-2.5 rounded-xl flex items-center justify-center space-x-1.5 shadow-sm shadow-emerald-500/10 transition"
                     >
                       <CheckCircle className="w-4 h-4" />
-                      <span>Confirm Collection</span>
+                      <span>Resolve & Clear Waste</span>
                     </button>
                     <button
                       onClick={() => handleRejectJob(job._id)}
@@ -263,43 +260,66 @@ export const CollectorDashboard: React.FC = () => {
 
         {/* Public pending list */}
         <div className="space-y-4">
-          <h3 className="font-extrabold text-slate-900 dark:text-white text-lg">Escalated Complaints ({pendingJobs.length})</h3>
+          <h3 className="font-extrabold text-slate-900 dark:text-white text-lg">Assigned Complaints ({pendingJobs.length})</h3>
           {pendingJobs.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-10 text-center text-xs text-slate-500 shadow-sm">
-              No escalated complaints available in your region. Check back later!
+              No pending complaints assigned to Municipality.
             </div>
           ) : (
             <div className="space-y-4">
-              {pendingJobs.map(job => (
-                <div key={job._id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-4 shadow-sm hover:border-slate-350 transition">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-extrabold text-sm text-slate-800 dark:text-slate-200">{job.wasteCategory}</span>
-                        <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-red-50 text-red-600 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
-                          ESCALATED TO NGO
-                        </span>
-                      </div>
-                      <div className="text-[10px] text-slate-400 mt-1">District Area: {job.location.address.split(',').slice(1,3).join(',')}</div>
-                    </div>
-                    <span className="text-xs font-extrabold text-blue-600 bg-blue-50 dark:bg-blue-950/20 px-2.5 py-1 rounded-xl">
-                      {job.estimatedWeight} kg
-                    </span>
-                  </div>
+              {pendingJobs.map(job => {
+                const getCountdown = (deadlineStr?: string) => {
+                  if (!deadlineStr) return '';
+                  const diff = new Date(deadlineStr).getTime() - Date.now();
+                  if (diff <= 0) return 'SLA Expired';
+                  const hrs = Math.floor(diff / 3600000);
+                  const mins = Math.floor((diff % 3600000) / 60000);
+                  return `${hrs}h ${mins}m remaining`;
+                };
 
-                  <div className="flex space-x-3 items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-3">
-                    <span className="text-[10px] text-slate-400 font-semibold">
-                      Escalated: {job.escalatedAt ? new Date(job.escalatedAt).toLocaleDateString() : new Date(job.createdAt).toLocaleDateString()}
-                    </span>
-                    <button
-                      onClick={() => handleAcceptJob(job._id)}
-                      className="bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl border border-transparent transition shadow-sm"
-                    >
-                      Claim Complaint
-                    </button>
+                const deadline = job.status === 'reminder_sent' ? job.reminderDeadline : job.slaDeadline;
+                const countdownText = getCountdown(deadline);
+
+                return (
+                  <div key={job._id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-4 shadow-sm hover:border-slate-300 transition">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-extrabold text-sm text-slate-800 dark:text-slate-200">{job.wasteCategory}</span>
+                          <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${
+                            job.status === 'reminder_sent' 
+                              ? 'bg-amber-50 text-amber-600 dark:bg-amber-950/20 border border-amber-200' 
+                              : 'bg-red-50 text-red-600 dark:bg-red-950/20 border border-red-200'
+                          }`}>
+                            {job.status === 'reminder_sent' ? 'REMINDER SENT (SLA)' : 'PENDING'}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 mt-1">District Area: {job.location.address.split(',').slice(1,3).join(',')}</div>
+                      </div>
+                      <span className="text-xs font-extrabold text-blue-600 bg-blue-50 dark:bg-blue-950/20 px-2.5 py-1 rounded-xl">
+                        {job.estimatedWeight} kg
+                      </span>
+                    </div>
+
+                    <div className="flex space-x-3 items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-3">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-slate-400 font-semibold">Posted: {new Date(job.createdAt).toLocaleDateString()}</span>
+                        {countdownText && (
+                          <span className={`text-[10px] font-extrabold ${countdownText === 'SLA Expired' ? 'text-red-500' : 'text-emerald-500'} mt-0.5`}>
+                            ⏱ {countdownText}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleAcceptJob(job._id)}
+                        className="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl transition shadow-sm shadow-emerald-500/10"
+                      >
+                        Accept & Resolve
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -310,14 +330,14 @@ export const CollectorDashboard: React.FC = () => {
         <div className="fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 max-w-md w-full p-6 space-y-6 shadow-2xl animate-fadeIn">
             <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
-              <span className="font-extrabold text-sm text-slate-800 dark:text-white">Complete Collection Pickup</span>
+              <span className="font-extrabold text-sm text-slate-800 dark:text-white">Complete waste Clearance</span>
               <button 
                 onClick={() => {
                   setCompletingJob(null);
                   setProofImage(null);
                   setMockProofUrl('');
                 }} 
-                className="text-slate-400 hover:text-slate-650 dark:hover:text-slate-350 text-xs font-bold"
+                className="text-slate-400 hover:text-slate-655 dark:hover:text-slate-350 text-xs font-bold"
               >
                 Close
               </button>
@@ -349,7 +369,7 @@ export const CollectorDashboard: React.FC = () => {
 
               {/* Photo Proof Upload */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Photo Proof of Pickup</label>
+                <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Photo Proof of Waste Clearance</label>
                 <div className="relative border-2 border-dashed border-slate-200 dark:border-slate-850 hover:border-emerald-450 dark:hover:border-emerald-600 rounded-2xl p-4 text-center cursor-pointer transition">
                   <input
                     type="file"
@@ -371,7 +391,7 @@ export const CollectorDashboard: React.FC = () => {
                       </div>
                     )}
                     <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                      {proofImage ? proofImage.name : 'Select or snap camera proof photo'}
+                      {proofImage ? proofImage.name : 'Select proof photo'}
                     </span>
                   </div>
                 </div>
@@ -382,7 +402,7 @@ export const CollectorDashboard: React.FC = () => {
                 disabled={completingSubmitting}
                 className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-450 text-white font-extrabold py-3 rounded-2xl text-xs transition shadow-md shadow-emerald-500/10 flex items-center justify-center space-x-2"
               >
-                {completingSubmitting ? 'Uploading Proof...' : 'Complete Collection'}
+                {completingSubmitting ? 'Uploading Proof...' : 'Complete & Resolve'}
               </button>
             </form>
           </div>

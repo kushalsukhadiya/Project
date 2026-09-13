@@ -75,7 +75,7 @@ export const Navbar: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate('/login');
   };
 
   const isActive = (path: string) => location.pathname === path;
@@ -88,13 +88,11 @@ export const Navbar: React.FC = () => {
       case 'citizen':
         return [
           { name: 'Dashboard', path: '/citizen', icon: Leaf },
-          { name: 'Report Plastic', path: '/report-waste', icon: MapPin },
-          { name: 'Leaderboard', path: '/leaderboard', icon: Award }
+          { name: 'Report Plastic', path: '/report-waste', icon: MapPin }
         ];
       case 'collector':
         return [
-          { name: 'Collector Dashboard', path: '/collector', icon: Leaf },
-          { name: 'Leaderboard', path: '/leaderboard', icon: Award }
+          { name: 'Collector Dashboard', path: '/collector', icon: Leaf }
         ];
       case 'recycler':
         return [
@@ -102,8 +100,11 @@ export const Navbar: React.FC = () => {
         ];
       case 'admin':
         return [
-          { name: 'Admin Control', path: '/admin', icon: BarChart3 },
-          { name: 'Leaderboard', path: '/leaderboard', icon: Award }
+          { name: 'Admin Control', path: '/admin', icon: BarChart3 }
+        ];
+      case 'municipal':
+        return [
+          { name: 'Municipal Control', path: '/municipal', icon: Leaf }
         ];
       default:
         return [];

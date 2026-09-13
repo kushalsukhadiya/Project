@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { AuthRequest } from './auth';
 
-export const authorizeRoles = (allowedRoles: ('citizen' | 'collector' | 'recycler' | 'admin')[]) => {
+export const authorizeRoles = (allowedRoles: ('citizen' | 'collector' | 'recycler' | 'admin' | 'municipal')[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ message: 'Unauthorized. Authenticated session required.' });

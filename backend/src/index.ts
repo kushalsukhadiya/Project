@@ -28,6 +28,8 @@ if (!fs.existsSync(uploadsDir)) {
 }
 app.use('/uploads', express.static(uploadsDir));
 
+import { startSlaScheduler } from './utils/slaScheduler';
+
 // Connect to Database and start server
 connectDB().then((uri) => {
   app.listen(PORT, () => {
@@ -36,6 +38,9 @@ connectDB().then((uri) => {
     console.log(` Database: ${uri.startsWith('mongodb://127.0.0.1') ? 'In-Memory Mock Server' : 'External Connection'}`);
     console.log(` API Base URL: http://localhost:${PORT}/api`);
     console.log(`===============================================`);
+    
+    // Start background SLA deadline checks
+    startSlaScheduler();
   });
 }).catch(err => {
   console.error('Database connection failed to initialize', err);
@@ -65,6 +70,16 @@ app.get('/api', (req: Request, res: Response) => {
     message: 'Welcome to EcoCycle API Portal. Systems operational.',
     timestamp: new Date()
   });
+});
+
+import PlasticRequest from './models/PlasticRequest';
+app.get('/api/debug-requests', async (req: Request, res: Response) => {
+  try {
+    const requests = await PlasticRequest.find({}).lean();
+    res.json(requests);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Global error handling middleware

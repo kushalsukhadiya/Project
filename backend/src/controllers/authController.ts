@@ -24,7 +24,7 @@ export const register = async (req: AuthRequest, res: Response) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Prepare role-specific details
-    const collectorDetails = role === 'collector' ? {
+    const collectorDetails = (role === 'collector' || role === 'municipal') ? {
       availability: false,
       earnings: 0,
       completedJobsToday: 0
@@ -175,7 +175,7 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
     if (profilePicture) user.profilePicture = profilePicture;
 
     // Update role specific fields
-    if (user.role === 'collector' && availability !== undefined) {
+    if ((user.role === 'collector' || user.role === 'municipal') && availability !== undefined) {
       user.collectorDetails.availability = availability;
     }
 

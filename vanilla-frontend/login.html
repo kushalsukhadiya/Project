@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In - EcoCycle</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            slate: {
+              350: '#b2c1d3',
+              450: '#8ca1b9',
+              655: '#4b5e78',
+              850: '#1e293b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Outfit', 'Inter', sans-serif;
+    }
+    .fade-in {
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-150 transition-colors duration-200">
+  <div id="navbar-container"></div>
+  
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex items-center justify-center">
+    <div class="max-w-md w-full mx-auto py-12 flex flex-col justify-center min-h-[70vh] fade-in">
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-xl space-y-6">
+        
+        <!-- Header -->
+        <div class="text-center space-y-2">
+          <div class="inline-flex p-3 bg-emerald-500/10 rounded-2xl">
+            <i data-lucide="leaf" class="w-8 h-8 text-emerald-500"></i>
+          </div>
+          <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white">Welcome Back</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Sign in to manage plastic waste collection and earn rewards.
+          </p>
+        </div>
+
+        <!-- Error Callout -->
+        <div id="error-callout" class="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-2xl flex items-center space-x-2 text-xs font-semibold text-red-600 dark:text-red-400 hidden">
+          <i data-lucide="shield-alert" class="w-4 h-4 flex-shrink-0"></i>
+          <span id="error-message"></span>
+        </div>
+
+
+        <!-- Form -->
+        <form id="login-form" class="space-y-4">
+          <div class="space-y-1.5">
+            <label class="text-xs font-bold text-slate-650 dark:text-slate-450">Email Address</label>
+            <div class="relative">
+              <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3 top-3.5"></i>
+              <input
+                type="email"
+                id="email"
+                required
+                placeholder="citizen@ecocycle.com"
+                class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition text-slate-900 dark:text-white"
+              />
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="text-xs font-bold text-slate-655 dark:text-slate-450">Password</label>
+            <div class="relative">
+              <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3 top-3.5"></i>
+              <input
+                type="password"
+                id="password"
+                required
+                placeholder="••••••••"
+                class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition text-slate-900 dark:text-white"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            id="submit-btn"
+            class="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-450 text-white font-extrabold py-3.5 rounded-2xl transition shadow-lg shadow-emerald-500/10 flex items-center justify-center space-x-2 text-sm mt-6"
+          >
+            <span>Sign In</span>
+          </button>
+        </form>
+
+        <!-- Redirect -->
+        <div class="text-center text-xs text-slate-500 dark:text-slate-450 pt-2">
+          New to EcoCycle? 
+          <a href="register.html" class="text-emerald-500 font-extrabold hover:underline">
+            Create an account
+          </a>
+        </div>
+
+        <!-- Seeding Demo Accounts Tip Box -->
+        <div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 p-4 text-[11px] text-slate-500 dark:text-slate-400 space-y-2 leading-relaxed">
+          <div class="font-extrabold text-slate-700 dark:text-slate-350 text-xs">Seeded Demo Login Profiles:</div>
+          <p>Test each dashboard using password <b>Password123</b>:</p>
+          <ul class="list-disc pl-4 space-y-1">
+            <li>Citizen: <code class="bg-slate-200 dark:bg-slate-850 px-1 py-0.5 rounded">citizen@ecocycle.com</code></li>
+            <li>Collector: <code class="bg-slate-200 dark:bg-slate-850 px-1 py-0.5 rounded">collector@ecocycle.com</code></li>
+            <li>Recycler: <code class="bg-slate-200 dark:bg-slate-850 px-1 py-0.5 rounded">recycler@ecocycle.com</code></li>
+            <li>Admin: <code class="bg-slate-200 dark:bg-slate-850 px-1 py-0.5 rounded">admin@ecocycle.com</code></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="footer-container"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const regRole = urlParams.get('registeredRole');
+      if (regRole) {
+        const savedEmail = localStorage.getItem('registeredEmail');
+        const savedPassword = localStorage.getItem('registeredPassword');
+        if (savedEmail && savedPassword) {
+          document.getElementById('email').value = savedEmail;
+          document.getElementById('password').value = savedPassword;
+          // Clear temporary local storage keys
+          localStorage.removeItem('registeredEmail');
+          localStorage.removeItem('registeredPassword');
+          localStorage.removeItem('registeredRole');
+        }
+      }
+    });
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const errorCallout = document.getElementById('error-callout');
+      const errorMessage = document.getElementById('error-message');
+      const submitBtn = document.getElementById('submit-btn');
+
+      errorCallout.classList.add('hidden');
+      
+      if (!email || !password) {
+        errorMessage.innerText = 'Please enter your email and password.';
+        errorCallout.classList.remove('hidden');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+        <span>Logging in...</span>
+      `;
+
+      try {
+        const response = await window.api.auth.login({ email, password });
+        localStorage.setItem('hasAccount', 'true');
+        window.auth.login(response.token, response.user);
+        
+        // Redirect based on user role
+        window.auth.redirectToDashboard(response.user.role);
+      } catch (err) {
+        errorMessage.innerText = err.message || 'Login failed. Please verify credentials.';
+        errorCallout.classList.remove('hidden');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Sign In</span>';
+        if (window.lucide) window.lucide.createIcons();
+      }
+    });
+  </script>
+</body>
+</html>

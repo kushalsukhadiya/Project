@@ -11,7 +11,7 @@ export const Register: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'citizen' | 'collector' | 'recycler'>('citizen');
+  const [role, setRole] = useState<'citizen' | 'collector' | 'recycler' | 'municipal'>('citizen');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
@@ -58,6 +58,7 @@ export const Register: React.FC = () => {
       
       // Redirect based on selected role
       if (role === 'collector') navigate('/collector');
+      else if (role === 'municipal') navigate('/municipal');
       else if (role === 'recycler') navigate('/recycler');
       else navigate('/citizen');
     } catch (err: any) {
@@ -94,19 +95,19 @@ export const Register: React.FC = () => {
           {/* Role selector buttons */}
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block">Choose Account Type</label>
-            <div className="grid grid-cols-3 gap-2">
-              {(['citizen', 'collector', 'recycler'] as const).map((r) => (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {(['citizen', 'collector', 'recycler', 'municipal'] as const).map((r) => (
                 <button
                   key={r}
                   type="button"
                   onClick={() => setRole(r)}
-                  className={`py-2 px-3 text-xs font-extrabold rounded-xl border capitalize transition-all ${
+                  className={`py-2 px-1 text-[11px] font-extrabold rounded-xl border capitalize transition-all ${
                     role === r
                       ? 'bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-500/10'
                       : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750'
                   }`}
                 >
-                  {r === 'recycler' ? 'recycling center' : r}
+                  {r === 'recycler' ? 'recycling center' : r === 'municipal' ? 'municipal' : r === 'collector' ? 'NGO Officer' : r}
                 </button>
               ))}
             </div>

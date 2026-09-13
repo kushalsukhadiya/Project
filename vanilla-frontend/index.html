@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoCycle - Connect, Collect, Save the Planet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            slate: {
+              350: '#b2c1d3',
+              450: '#8ca1b9',
+              655: '#4b5e78',
+              850: '#1e293b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Outfit', 'Inter', sans-serif;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+    .dark .glass {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    @keyframes slow-spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .animate-slow-spin {
+      animation: slow-spin 20s linear infinite;
+    }
+    .fade-in {
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-150 transition-colors duration-200">
+  <div id="navbar-container"></div>
+  
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="space-y-20 py-8 fade-in">
+      
+      <!-- Hero Section -->
+      <section class="relative overflow-hidden rounded-3xl bg-gradient-to-tr from-emerald-500/10 via-emerald-500/5 to-transparent dark:from-emerald-950/20 px-6 py-16 sm:px-12 sm:py-24 text-center border border-slate-200/50 dark:border-slate-800/40">
+        <div class="absolute top-0 right-0 p-8 opacity-10 animate-slow-spin">
+          <i data-lucide="leaf" class="w-48 h-48 text-emerald-500"></i>
+        </div>
+        
+        <div class="relative max-w-3xl mx-auto space-y-6">
+          <div class="inline-flex items-center space-x-2 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1.5 rounded-full text-xs font-bold text-emerald-600 dark:text-emerald-400">
+            <i data-lucide="leaf" class="w-3.5 h-3.5"></i>
+            <span>Join The Smart Recycling Movement</span>
+          </div>
+          
+          <h1 class="text-4xl sm:text-6xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
+            Connect. Collect.<br/>
+            <span class="text-emerald-500 bg-clip-text">Save the Planet.</span>
+          </h1>
+          
+
+          
+          <div class="pt-4 flex flex-col sm:flex-row justify-center items-center gap-4">
+            <a
+              id="hero-cta"
+              href="login.html"
+              class="w-full sm:w-auto px-8 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-2xl shadow-lg shadow-emerald-500/20 transition hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center space-x-2"
+            >
+              <span id="hero-cta-text">Get Started Now</span>
+              <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            </a>
+            <a
+              href="#rewards"
+              class="w-full sm:w-auto px-8 py-3.5 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-300 font-extrabold rounded-2xl border border-slate-200 dark:border-slate-800 transition hover:-translate-y-0.5"
+            >
+              Learn Rewards
+            </a>
+          </div>
+        </div>
+      </section>
+
+
+
+      <!-- Dynamic Workflow -->
+      <section class="space-y-12">
+        <div class="text-center space-y-3">
+          <h2 class="text-3xl font-extrabold text-slate-900 dark:text-white">How EcoCycle Works</h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400 max-w-lg mx-auto">
+            A simple, end-to-end transparent loop linking garbage reporting to industrial recycling.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
+          <!-- Step 1 -->
+          <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 relative space-y-4 shadow-sm hover:-translate-y-1 transition duration-200">
+            <div class="flex justify-between items-center">
+              <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl text-emerald-600 dark:text-emerald-400">
+                <i data-lucide="map-pin" class="w-6 h-6"></i>
+              </div>
+              <span class="text-3xl font-extrabold text-slate-200 dark:text-slate-800">01</span>
+            </div>
+            <h3 class="font-extrabold text-slate-900 dark:text-white text-base">Citizen Reports</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Pin request on the map and scan plastic type using AI estimations.</p>
+          </div>
+          
+          <!-- Step 2 -->
+          <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 relative space-y-4 shadow-sm hover:-translate-y-1 transition duration-200">
+            <div class="flex justify-between items-center">
+              <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl text-emerald-600 dark:text-emerald-400">
+                <i data-lucide="shield-check" class="w-6 h-6"></i>
+              </div>
+              <span class="text-3xl font-extrabold text-slate-200 dark:text-slate-800">02</span>
+            </div>
+            <h3 class="font-extrabold text-slate-900 dark:text-white text-base">Collector Picks Up</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Collector accepts, navigates to the location, and uploads proof.</p>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 relative space-y-4 shadow-sm hover:-translate-y-1 transition duration-200">
+            <div class="flex justify-between items-center">
+              <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl text-emerald-600 dark:text-emerald-400">
+                <i data-lucide="recycle" class="w-6 h-6"></i>
+              </div>
+              <span class="text-3xl font-extrabold text-slate-200 dark:text-slate-800">03</span>
+            </div>
+            <h3 class="font-extrabold text-slate-900 dark:text-white text-base">Recycling Receipt</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Recycler confirms receiving shipment and processes the plastic.</p>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 relative space-y-4 shadow-sm hover:-translate-y-1 transition duration-200">
+            <div class="flex justify-between items-center">
+              <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl text-emerald-600 dark:text-emerald-400">
+                <i data-lucide="award" class="w-6 h-6"></i>
+              </div>
+              <span class="text-3xl font-extrabold text-slate-200 dark:text-slate-800">04</span>
+            </div>
+            <h3 class="font-extrabold text-slate-900 dark:text-white text-base">Verify & Rewards</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Admin verifies recycling, credits points, and upgrades user tiers.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <div id="footer-container"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const loggedIn = window.auth.isAuthenticated();
+      const user = window.auth.getUser();
+
+      const ctaBtn = document.getElementById('hero-cta');
+      const ctaText = document.getElementById('hero-cta-text');
+
+      if (loggedIn && user) {
+        let dashboardPage = 'citizen.html';
+        switch (user.role) {
+          case 'admin': dashboardPage = 'admin.html'; break;
+          case 'municipal': dashboardPage = 'municipal.html'; break;
+          case 'collector': dashboardPage = 'collector.html'; break;
+          case 'recycler': dashboardPage = 'recycler.html'; break;
+        }
+        if (ctaBtn) {
+          ctaBtn.href = dashboardPage;
+          if (ctaText) ctaText.innerText = 'Go to Dashboard';
+        }
+      } else {
+        if (ctaBtn) {
+          ctaBtn.href = 'register.html';
+          if (ctaText) ctaText.innerText = 'Get Started Now';
+        }
+      }
+    });
+  </script>
+</body>
+</html>

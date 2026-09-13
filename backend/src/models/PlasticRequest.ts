@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IRequestHistory {
-  status: 'pending' | 'accepted' | 'picked_up' | 'received' | 'recycled' | 'cancelled';
+  status: 'pending' | 'reminder_sent' | 'assigned_municipality' | 'escalated' | 'assigned_ngo' | 'in_progress' | 'completed' | 'verified' | 'closed' | 'rejected' | 'duplicate';
   updatedAt: Date;
   updatedBy: mongoose.Types.ObjectId;
 }
@@ -17,7 +17,7 @@ export interface IPlasticRequest extends Document {
     address: string;
   };
   images: string[];
-  status: 'pending' | 'accepted' | 'picked_up' | 'received' | 'recycled' | 'cancelled';
+  status: 'pending' | 'reminder_sent' | 'assigned_municipality' | 'escalated' | 'assigned_ngo' | 'in_progress' | 'completed' | 'verified' | 'closed' | 'rejected' | 'duplicate';
   collector?: mongoose.Types.ObjectId;
   recyclingCenter?: mongoose.Types.ObjectId;
   pickupProofImage?: string;
@@ -26,12 +26,41 @@ export interface IPlasticRequest extends Document {
   feedbackComment?: string;
   createdAt: Date;
   updatedAt: Date;
+  
+  // New SLA Escalation Fields
+  assignedTo?: mongoose.Types.ObjectId;
+  assignedOrganizationType?: 'municipality' | 'ngo';
+  assignedAt?: Date;
+  acceptedAt?: Date;
+  reminderSentAt?: Date;
+  escalatedAt?: Date;
+  completedAt?: Date;
+  verifiedAt?: Date;
+  slaDeadline?: Date;
+  reminderDeadline?: Date;
+  beforeImage?: string;
+  afterImage?: string;
+  adminRemarks?: string;
+  claimedBy?: mongoose.Types.ObjectId;
+  claimTimestamp?: Date;
 }
 
 const RequestHistorySchema = new Schema({
   status: {
     type: String,
-    enum: ['pending', 'accepted', 'picked_up', 'received', 'recycled', 'cancelled'],
+    enum: [
+      'pending',
+      'reminder_sent',
+      'assigned_municipality',
+      'escalated',
+      'assigned_ngo',
+      'in_progress',
+      'completed',
+      'verified',
+      'closed',
+      'rejected',
+      'duplicate'
+    ],
     required: true
   },
   updatedAt: { type: Date, default: Date.now },
@@ -72,7 +101,19 @@ const PlasticRequestSchema: Schema = new Schema(
     images: [{ type: String }],
     status: {
       type: String,
-      enum: ['pending', 'accepted', 'picked_up', 'received', 'recycled', 'cancelled'],
+      enum: [
+        'pending',
+        'reminder_sent',
+        'assigned_municipality',
+        'escalated',
+        'assigned_ngo',
+        'in_progress',
+        'completed',
+        'verified',
+        'closed',
+        'rejected',
+        'duplicate'
+      ],
       default: 'pending'
     },
     collector: { type: Schema.Types.ObjectId, ref: 'User' },
@@ -80,7 +121,24 @@ const PlasticRequestSchema: Schema = new Schema(
     pickupProofImage: { type: String },
     history: [RequestHistorySchema],
     feedbackRating: { type: Number, min: 1, max: 5 },
-    feedbackComment: { type: String }
+    feedbackComment: { type: String },
+
+    // New SLA Escalation Mongoose Fields
+    assignedTo: { type: Schema.Types.ObjectId, ref: 'User' },
+    assignedOrganizationType: { type: String, enum: ['municipality', 'ngo'] },
+    assignedAt: { type: Date },
+    acceptedAt: { type: Date },
+    reminderSentAt: { type: Date },
+    escalatedAt: { type: Date },
+    completedAt: { type: Date },
+    verifiedAt: { type: Date },
+    slaDeadline: { type: Date },
+    reminderDeadline: { type: Date },
+    beforeImage: { type: String },
+    afterImage: { type: String },
+    adminRemarks: { type: String },
+    claimedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    claimTimestamp: { type: Date }
   },
   { timestamps: true }
 );

@@ -92,7 +92,7 @@ export const getAnalytics = async (req: AuthRequest, res: Response) => {
     const collectorsList = await User.find({ role: 'collector' })
       .select('name collectorDetails')
       .limit(5);
-    
+
     const collectorPerformance = collectorsList.map(c => ({
       name: c.name,
       jobs: c.collectorDetails.completedJobsToday + 2, // adding constant base for nice chart scale
@@ -147,8 +147,8 @@ export const verifyRequest = async (req: AuthRequest, res: Response) => {
     const request = await PlasticRequest.findById(req.params.id);
     if (!request) return res.status(404).json({ message: 'Request not found.' });
 
-    if (request.status !== 'recycled') {
-      return res.status(400).json({ message: 'Only requests that have been processed/recycled by recycling centers can be verified.' });
+    if (request.status !== 'completed' && request.status !== 'recycled') {
+      return res.status(400).json({ message: 'Only requests that are Completed or Recycled can be verified.' });
     }
 
     // Verify if reward points were already credited (we check if a reward entry exists for this request)
@@ -157,12 +157,25 @@ export const verifyRequest = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ message: 'This pickup request has already been verified and rewards have been released.' });
     }
 
+    const { adminRemarks } = req.body;
+    const now = new Date();
+
+    request.status = 'closed';
+    request.verifiedAt = now;
+    if (adminRemarks) request.adminRemarks = adminRemarks;
+    request.history.push({
+      status: 'closed',
+      updatedBy: new mongoose.Types.ObjectId(req.user.id),
+      updatedAt: now
+    });
+    await request.save();
+
     // Credit points to Citizen
     const citizenUser = await User.findById(request.citizen);
     if (!citizenUser) return res.status(404).json({ message: 'Citizen who reported this waste not found.' });
 
     const { points: pointsEarned, co2Offset } = calculateImpact(request.wasteCategory, request.estimatedWeight);
-    
+
     // Add points
     citizenUser.rewards.points += pointsEarned;
     citizenUser.rewards.tier = getTier(citizenUser.rewards.points);
@@ -225,7 +238,7 @@ export const listFeedback = async (req: AuthRequest, res: Response) => {
 export const deleteUser = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user || req.user.role !== 'admin') return res.status(403).json({ message: 'Access denied.' });
-    
+
     // Prevent self-deletion
     if (req.params.id === req.user.id) {
       return res.status(400).json({ message: 'Self-deletion is not permitted.' });

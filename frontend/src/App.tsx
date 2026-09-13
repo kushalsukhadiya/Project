@@ -13,9 +13,39 @@ import { CitizenDashboard } from './pages/CitizenDashboard';
 import { CollectorDashboard } from './pages/CollectorDashboard';
 import { RecyclerDashboard } from './pages/RecyclerDashboard';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { MunicipalDashboard } from './pages/MunicipalDashboard';
 import { ReportWaste } from './pages/ReportWaste';
 import { Leaderboard } from './pages/Leaderboard';
 import { Profile } from './pages/Profile';
+
+import { useAuth } from './context/AuthContext';
+
+const RootRoute: React.FC = () => {
+  const { isAuthenticated, user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <div className="flex flex-col items-center space-y-4 animate-pulse">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-bold">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated && user) {
+    switch (user.role) {
+      case 'admin': return <Navigate to="/admin" replace />;
+      case 'municipal': return <Navigate to="/municipal" replace />;
+      case 'collector': return <Navigate to="/collector" replace />;
+      case 'recycler': return <Navigate to="/recycler" replace />;
+      default: return <Navigate to="/citizen" replace />;
+    }
+  }
+
+  return <Navigate to="/login" replace />;
+};
 
 function App() {
   return (
@@ -73,6 +103,16 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <AdminDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+
+              {/* Private Municipal Routes */}
+              <Route 
+                path="/municipal" 
+                element={
+                  <ProtectedRoute allowedRoles={['municipal']}>
+                    <MunicipalDashboard />
                   </ProtectedRoute>
                 } 
               />

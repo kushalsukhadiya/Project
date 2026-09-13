@@ -7,8 +7,8 @@ import {
   PieChart, Pie, Cell, LineChart, Line
 } from 'recharts';
 import { 
-  BarChart3, Users, FileText, Star, ShieldCheck, 
-  Trash2, Scale, Recycle, AlertCircle, Info, Calendar, MapPin
+  BarChart3, Users, Star, ShieldCheck, 
+  Trash2, MapPin
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
@@ -39,6 +39,8 @@ export const AdminDashboard: React.FC = () => {
   const [feedbackList, setFeedbackList] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
 
+
+
   // Recharts colors
   const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#f43f5e'];
 
@@ -49,13 +51,9 @@ export const AdminDashboard: React.FC = () => {
       setSummary(analytics.summary);
       setCharts(analytics.charts);
 
-      // 2. Get Verify Queue (All requests with status 'recycled' that need point release verification)
-      // We can also retrieve all requests and filter them
+      // 2. Get Verify Queue (All requests with status 'completed' or 'recycled' that need point release verification)
       const allReqs = await api.admin.getAllRequests();
-      // A request needs verification if its status is 'recycled' and citizen points haven't been credited yet
-      // To simulate, we show all recycled requests in the queue.
-      // (The controller will block double point crediting via a database ledger query checks)
-      setVerifyQueue(allReqs.filter((r: PlasticRequest) => r.status === 'recycled'));
+      setVerifyQueue(allReqs.filter((r: PlasticRequest) => r.status === 'completed' || r.status === 'recycled'));
 
       // 3. Get Users List
       const users = await api.admin.getUsers();
@@ -79,7 +77,7 @@ export const AdminDashboard: React.FC = () => {
   const handleVerifyRequest = async (id: string) => {
     try {
       await api.admin.verifyRequest(id);
-      alert('Recycling report verified successfully! Citizen reward points have been credited.');
+      alert('Complaint verified and closed! Rewards successfully released to Citizen.');
       fetchAdminData();
     } catch (err: any) {
       alert(err.message || 'Verification failed.');
@@ -96,6 +94,8 @@ export const AdminDashboard: React.FC = () => {
       alert(err.message || 'Deletion failed.');
     }
   };
+
+
 
   if (loading) {
     return (
@@ -149,11 +149,9 @@ export const AdminDashboard: React.FC = () => {
       {activeTab === 'analytics' && (
         <div className="space-y-8">
           {/* Analytics Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 gap-6">
             {[
               { label: 'Total Users', value: summary.totalUsers, desc: `${summary.totalCollectors} collectors, ${summary.totalRecyclers} centers`, color: 'bg-emerald-500/10 text-emerald-500' },
-              { label: 'Total Weight Collected', value: `${summary.totalCollectedWeight} kg`, desc: 'Dispacthed from citizens', color: 'bg-blue-500/10 text-blue-500' },
-              { label: 'Total Weight Recycled', value: `${summary.totalRecycledWeight} kg`, desc: 'Processed by centers', color: 'bg-green-500/10 text-green-500' },
               { label: 'Pending Requests', value: summary.pendingRequests, desc: 'Awaiting collector accepts', color: 'bg-red-500/10 text-red-500' }
             ].map((card, i) => (
               <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm">
@@ -420,6 +418,8 @@ export const AdminDashboard: React.FC = () => {
           )}
         </div>
       )}
+
+
     </div>
   );
 };

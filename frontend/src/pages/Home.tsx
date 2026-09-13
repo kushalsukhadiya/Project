@@ -14,6 +14,7 @@ export const Home: React.FC = () => {
     if (!isAuthenticated || !user) return '/login';
     switch (user.role) {
       case 'admin': return '/admin';
+      case 'municipal': return '/municipal';
       case 'collector': return '/collector';
       case 'recycler': return '/recycler';
       default: return '/citizen';

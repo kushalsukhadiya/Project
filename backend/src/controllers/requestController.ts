@@ -110,6 +110,8 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
       images.push(req.body.imageUrl);
     }
 
+    const now = new Date();
+    const slaDeadline = new Date(now.getTime() + 48 * 60 * 60 * 1000); // 48-hour response deadline
     const pickupDateObj = new Date(pickupDate);
 
     // Create request
@@ -125,22 +127,24 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
       },
       images,
       status: 'pending',
-      history: [{ status: 'pending', updatedBy: new mongoose.Types.ObjectId(req.user.id), updatedAt: new Date() }]
+      slaDeadline,
+      assignedOrganizationType: 'municipality',
+      history: [{ status: 'pending', updatedBy: new mongoose.Types.ObjectId(req.user.id), updatedAt: now }]
     });
 
-    // Notify nearby active collectors (simulate notification creation)
-    const activeCollectors = await User.find({ role: 'collector', 'collectorDetails.availability': true });
-    for (const coll of activeCollectors) {
+    // Notify Municipal Officers (Municipality receives the complaint first)
+    const municipalOfficers = await User.find({ role: 'municipal' });
+    for (const muni of municipalOfficers) {
       await Notification.create({
-        user: coll._id,
-        title: 'New Pickup Job Available',
-        message: `A new collection job for ${estimatedWeight}kg of ${wasteCategory} has been reported in ${req.body.area || 'your city'}.`,
+        user: muni._id,
+        title: 'New Complaint Assigned',
+        message: `A new environmental complaint has been assigned to Municipality. ${estimatedWeight}kg of ${wasteCategory} reported in ${address}.`,
         type: 'info'
       });
     }
 
     res.status(201).json({
-      message: 'Waste reported successfully. A collector will be notified.',
+      message: 'Complaint submitted successfully. Municipality has been assigned and notified.',
       request: plasticRequest
     });
   } catch (error: any) {

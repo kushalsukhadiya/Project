@@ -12,8 +12,8 @@ import { sendNotificationEmail } from '../config/mailer';
 // @access  Private (Collector)
 export const toggleAvailability = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.user || req.user.role !== 'collector') {
-      return res.status(403).json({ message: 'Only collectors can toggle availability.' });
+    if (!req.user || (req.user.role !== 'collector' && req.user.role !== 'admin' && req.user.role !== 'municipal')) {
+      return res.status(403).json({ message: 'Only collectors, admins, or municipal officers can toggle availability.' });
     }
 
     const { availability } = req.body;
@@ -42,20 +42,31 @@ export const toggleAvailability = async (req: AuthRequest, res: Response) => {
 // @access  Private (Collector)
 export const listPendingJobs = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.user || req.user.role !== 'collector') {
+    if (!req.user || (req.user.role !== 'collector' && req.user.role !== 'admin' && req.user.role !== 'municipal')) {
       return res.status(403).json({ message: 'Access denied.' });
     }
 
-    // Filter optionally by city/area
     const { city, area, wasteCategory } = req.query;
-    const filterQuery: any = { status: 'pending' };
+    
+    const cleanQuery = (val: any) => {
+      if (!val || val === 'undefined' || val === 'null' || String(val).trim() === '') return undefined;
+      return val;
+    };
 
-    if (city) filterQuery['city'] = city;
-    // We can filter by location address keywords
-    if (area) {
-      filterQuery['location.address'] = { $regex: area, $options: 'i' };
+    const queryCity = cleanQuery(city);
+    const queryArea = cleanQuery(area);
+    const queryWasteCategory = cleanQuery(wasteCategory);
+
+    const isMunicipal = req.user.role === 'municipal';
+    const filterQuery: any = { 
+      status: isMunicipal ? { $in: ['pending', 'reminder_sent'] } : 'escalated' 
+    };
+
+    if (queryCity) filterQuery['city'] = queryCity;
+    if (queryArea) {
+      filterQuery['location.address'] = { $regex: queryArea, $options: 'i' };
     }
-    if (wasteCategory) filterQuery['wasteCategory'] = wasteCategory;
+    if (queryWasteCategory) filterQuery['wasteCategory'] = queryWasteCategory;
 
     const jobs = await PlasticRequest.find(filterQuery)
       .populate('citizen', 'name phoneNumber profilePicture')
@@ -73,30 +84,68 @@ export const listPendingJobs = async (req: AuthRequest, res: Response) => {
 // @access  Private (Collector)
 export const acceptJob = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.user || req.user.role !== 'collector') {
-      return res.status(403).json({ message: 'Access denied. Collector role required.' });
+    if (!req.user || (req.user.role !== 'collector' && req.user.role !== 'admin' && req.user.role !== 'municipal')) {
+      return res.status(403).json({ message: 'Access denied. Collector, Admin or Municipal role required.' });
     }
 
     const request = await PlasticRequest.findById(req.params.id);
     if (!request) {
-      return res.status(404).json({ message: 'Pickup request not found.' });
-    }
-
-    if (request.status !== 'pending') {
-      return res.status(400).json({ message: 'Request is no longer available. Already accepted or cancelled.' });
+      return res.status(404).json({ message: 'Complaint not found.' });
     }
 
     const collectorUser = await User.findById(req.user.id);
-    if (!collectorUser) return res.status(404).json({ message: 'Collector profile not found.' });
+    if (!collectorUser) return res.status(404).json({ message: 'User profile not found.' });
 
-    // Update request
-    request.status = 'accepted';
-    request.collector = collectorUser._id as mongoose.Types.ObjectId;
-    request.history.push({
-      status: 'accepted',
-      updatedBy: collectorUser._id as mongoose.Types.ObjectId,
-      updatedAt: new Date()
-    });
+    const now = new Date();
+
+    if (req.user.role === 'municipal') {
+      // Municipality responds first (Pending or Reminder Sent)
+      if (request.status !== 'pending' && request.status !== 'reminder_sent') {
+        return res.status(400).json({ message: 'Municipality can only accept complaints that are Pending or have Reminder Sent status.' });
+      }
+      
+      request.status = 'assigned_municipality';
+      request.assignedTo = collectorUser._id as mongoose.Types.ObjectId;
+      request.assignedOrganizationType = 'municipality';
+      request.assignedAt = now;
+      request.acceptedAt = now;
+      request.history.push({
+        status: 'assigned_municipality',
+        updatedBy: collectorUser._id as mongoose.Types.ObjectId,
+        updatedAt: now
+      });
+
+    } else if (req.user.role === 'collector') {
+      // NGO Officer (collector) claims after escalation
+      if (request.status !== 'escalated') {
+        return res.status(400).json({ message: 'NGOs can only claim complaints that have been Escalated.' });
+      }
+
+      request.status = 'assigned_ngo';
+      request.assignedTo = collectorUser._id as mongoose.Types.ObjectId;
+      request.assignedOrganizationType = 'ngo';
+      request.assignedAt = now;
+      request.acceptedAt = now;
+      request.claimedBy = collectorUser._id as mongoose.Types.ObjectId;
+      request.claimTimestamp = now;
+      request.history.push({
+        status: 'assigned_ngo',
+        updatedBy: collectorUser._id as mongoose.Types.ObjectId,
+        updatedAt: now
+      });
+    } else {
+      // Admin overrides
+      request.status = 'assigned_municipality';
+      request.assignedTo = collectorUser._id as mongoose.Types.ObjectId;
+      request.assignedOrganizationType = 'municipality';
+      request.assignedAt = now;
+      request.acceptedAt = now;
+      request.history.push({
+        status: 'assigned_municipality',
+        updatedBy: collectorUser._id as mongoose.Types.ObjectId,
+        updatedAt: now
+      });
+    }
 
     await request.save();
 
@@ -105,21 +154,21 @@ export const acceptJob = async (req: AuthRequest, res: Response) => {
     if (citizenUser) {
       await Notification.create({
         user: citizenUser._id,
-        title: 'Pickup Request Accepted',
-        message: `Collector ${collectorUser.name} has accepted your request. Expected pickup soon!`,
+        title: 'Complaint Accepted',
+        message: `Your complaint has been accepted by ${collectorUser.name} (${collectorUser.role === 'municipal' ? 'Municipality' : 'NGO'}).`,
         type: 'success'
       });
 
       // Send Email
       await sendNotificationEmail(
         citizenUser.email,
-        'EcoCycle - Pickup Request Accepted',
-        `Hello ${citizenUser.name},\n\nYour plastic waste collection request has been accepted by collector ${collectorUser.name}. They will contact you shortly at ${collectorUser.phoneNumber}.\n\nThank you for choosing EcoCycle!`
+        'EcoCycle - Complaint Accepted',
+        `Hello ${citizenUser.name},\n\nYour waste complaint has been accepted for clearance by ${collectorUser.name}.\n\nThank you for choosing EcoCycle!`
       );
     }
 
     res.json({
-      message: 'Job accepted. You are now assigned to this collection.',
+      message: 'Complaint claimed successfully.',
       request
     });
   } catch (error: any) {
@@ -133,28 +182,36 @@ export const acceptJob = async (req: AuthRequest, res: Response) => {
 // @access  Private (Collector)
 export const rejectJob = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.user || req.user.role !== 'collector') {
+    if (!req.user || (req.user.role !== 'collector' && req.user.role !== 'admin' && req.user.role !== 'municipal')) {
       return res.status(403).json({ message: 'Access denied.' });
     }
 
     const request = await PlasticRequest.findById(req.params.id);
     if (!request) return res.status(404).json({ message: 'Request not found.' });
 
-    if (request.status !== 'accepted' || request.collector?.toString() !== req.user.id) {
+    if (request.assignedTo?.toString() !== req.user.id) {
       return res.status(400).json({ message: 'You can only release jobs currently assigned to you.' });
     }
 
-    request.status = 'pending';
-    request.collector = undefined;
+    const previousStatus = request.status;
+    const isMunicipal = req.user.role === 'municipal';
+    
+    request.status = isMunicipal ? 'pending' : 'escalated';
+    request.assignedTo = undefined;
+    request.assignedOrganizationType = undefined;
+    request.assignedAt = undefined;
+    request.acceptedAt = undefined;
+    request.claimedBy = undefined;
+    request.claimTimestamp = undefined;
     request.history.push({
-      status: 'pending',
+      status: request.status,
       updatedBy: new mongoose.Types.ObjectId(req.user.id),
       updatedAt: new Date()
     });
 
     await request.save();
 
-    res.json({ message: 'Job released back to public pending queue.', request });
+    res.json({ message: `Job released back to public ${isMunicipal ? 'pending' : 'escalated'} queue.`, request });
   } catch (error: any) {
     console.error('Release Job Error:', error);
     res.status(500).json({ message: 'Server error releasing job.', error: error.message });
@@ -166,8 +223,8 @@ export const rejectJob = async (req: AuthRequest, res: Response) => {
 // @access  Private (Collector)
 export const pickupJob = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.user || req.user.role !== 'collector') {
-      return res.status(403).json({ message: 'Access denied. Collector role required.' });
+    if (!req.user || (req.user.role !== 'collector' && req.user.role !== 'admin' && req.user.role !== 'municipal')) {
+      return res.status(403).json({ message: 'Access denied. Collector, Admin or Municipal role required.' });
     }
 
     const { recyclingCenterId } = req.body;
@@ -180,7 +237,8 @@ export const pickupJob = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: 'Pickup request not found.' });
     }
 
-    if (request.status !== 'accepted' || request.collector?.toString() !== req.user.id) {
+    // Verify assignment
+    if (request.assignedTo?.toString() !== req.user.id) {
       return res.status(400).json({ message: 'Request is not accepted by you.' });
     }
 
@@ -203,14 +261,20 @@ export const pickupJob = async (req: AuthRequest, res: Response) => {
     const collectorUser = await User.findById(req.user.id);
     if (!collectorUser) return res.status(404).json({ message: 'Collector profile not found.' });
 
+    const now = new Date();
+
     // Update request details
-    request.status = 'picked_up';
+    request.status = 'completed';
     request.recyclingCenter = recycler._id as mongoose.Types.ObjectId;
     request.pickupProofImage = proofUrl;
+    request.beforeImage = req.body.beforeImage || request.images[0] || 'https://images.unsplash.com/photo-1618477388954-7852f32655ec?auto=format&fit=crop&w=400&h=300&q=80';
+    request.afterImage = proofUrl;
+    request.completedAt = now;
+    
     request.history.push({
-      status: 'picked_up',
+      status: 'completed',
       updatedBy: collectorUser._id as mongoose.Types.ObjectId,
-      updatedAt: new Date()
+      updatedAt: now
     });
 
     await request.save();
@@ -262,17 +326,17 @@ export const getCollectorStats = async (req: AuthRequest, res: Response) => {
     if (!collector) return res.status(404).json({ message: 'Collector profile not found.' });
 
     const activeJobs = await PlasticRequest.find({
-      collector: req.user.id,
-      status: 'accepted'
+      assignedTo: req.user.id,
+      status: { $in: ['assigned_municipality', 'assigned_ngo', 'in_progress'] }
     }).populate('citizen', 'name phoneNumber address');
 
     const completedJobsCount = await PlasticRequest.countDocuments({
-      collector: req.user.id,
-      status: { $in: ['picked_up', 'received', 'recycled'] }
+      assignedTo: req.user.id,
+      status: { $in: ['completed', 'verified', 'closed'] }
     });
 
     res.json({
-      availability: collector.collectorDetails.availability,
+      availability: true,
       earnings: collector.collectorDetails.earnings,
       completedJobsToday: collector.collectorDetails.completedJobsToday,
       totalCompletedJobs: completedJobsCount,

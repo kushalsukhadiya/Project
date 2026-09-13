@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recycler Dashboard - EcoCycle</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            slate: {
+              350: '#b2c1d3',
+              450: '#8ca1b9',
+              655: '#4b5e78',
+              850: '#1e293b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Outfit', 'Inter', sans-serif;
+    }
+    .fade-in {
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-150 transition-colors duration-200">
+  <div id="navbar-container"></div>
+  
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="space-y-8 py-4 fade-in">
+      
+      <!-- Welcome Header -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 sm:p-8 rounded-3xl gap-4 shadow-sm flex flex-col sm:flex-row justify-between sm:items-center">
+        <div>
+          <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white" id="facility-title">Recycling Center</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Oversee incoming deliveries, confirm container arrivals, and log recycled plastic quantities.
+          </p>
+        </div>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm">
+          <div class="text-[10px] uppercase font-bold text-slate-400">Total Recycled Weight</div>
+          <div class="text-xl font-extrabold text-slate-800 dark:text-white mt-1" id="total-recycled">0 kg</div>
+          <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 mt-3">
+            <div id="recycled-progress" class="bg-emerald-500 h-1.5 rounded-full" style="width: 0%"></div>
+          </div>
+          <div class="flex justify-between items-center text-[10px] text-slate-400 mt-2">
+            <span>Monthly Progress</span>
+            <span id="recycled-percent">0%</span>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex items-center space-x-4">
+          <div class="p-3 bg-blue-500/10 rounded-xl"><i data-lucide="scale" class="w-6 h-6 text-blue-500"></i></div>
+          <div>
+            <div class="text-[10px] uppercase font-bold text-slate-450">Facility Capacity</div>
+            <div class="text-xl font-extrabold text-slate-800 dark:text-white mt-0.5"><span id="capacity-value">10,000</span> kg</div>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex items-center space-x-4">
+          <div class="p-3 bg-yellow-500/10 rounded-xl"><i data-lucide="package" class="w-6 h-6 text-yellow-500"></i></div>
+          <div>
+            <div class="text-[10px] uppercase font-bold text-slate-450">Incoming Shipments</div>
+            <div class="text-xl font-extrabold text-slate-800 dark:text-white mt-0.5" id="incoming-count">0</div>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex items-center space-x-4">
+          <div class="p-3 bg-purple-500/10 rounded-xl"><i data-lucide="check-square" class="w-6 h-6 text-purple-500"></i></div>
+          <div>
+            <div class="text-[10px] uppercase font-bold text-slate-450">Processing Queue</div>
+            <div class="text-xl font-extrabold text-slate-800 dark:text-white mt-0.5" id="received-count">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Queues Container -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Left: Incoming Cargo -->
+        <div class="space-y-4">
+          <h3 class="font-extrabold text-slate-900 dark:text-white text-lg flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+            <span>Incoming Deliveries</span>
+          </h3>
+          <div id="incoming-list" class="space-y-4">
+            <!-- Incoming items -->
+          </div>
+        </div>
+
+        <!-- Right: Processing Queue -->
+        <div class="space-y-4">
+          <h3 class="font-extrabold text-slate-900 dark:text-white text-lg flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+            <span>Processing & Recycling</span>
+          </h3>
+          <div id="processing-list" class="space-y-4">
+            <!-- Processing items -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Recycled History (Full Width) -->
+      <div class="space-y-4 pt-4">
+        <h3 class="font-extrabold text-slate-900 dark:text-white text-lg">Processed Shipments Log</h3>
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-slate-550 dark:text-slate-400">
+              <thead class="bg-slate-50 dark:bg-slate-850/50 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th class="px-6 py-4">Shipment ID</th>
+                  <th class="px-6 py-4">Plastic Category</th>
+                  <th class="px-6 py-4">Weight</th>
+                  <th class="px-6 py-4">Verification Date</th>
+                  <th class="px-6 py-4">Status</th>
+                </tr>
+              </thead>
+              <tbody id="history-rows" class="divide-y divide-slate-100 dark:divide-slate-800">
+                <!-- History logs -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </main>
+
+  <div id="footer-container"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      await fetchDashboardData();
+    });
+
+    async function fetchDashboardData() {
+      try {
+        const stats = await window.api.recycler.getStats();
+
+        document.getElementById('facility-title').innerText = stats.facilityName || 'Recycling Center';
+        document.getElementById('total-recycled').innerText = `${stats.totalRecycledWeight} kg`;
+        document.getElementById('capacity-value').innerText = stats.capacity.toLocaleString();
+        
+        const percent = Math.min(100, Math.round(stats.monthlyProgressPercentage));
+        document.getElementById('recycled-progress').style.width = `${percent}%`;
+        document.getElementById('recycled-percent').innerText = `${percent}%`;
+
+        // Fetch shipments lists
+        const incoming = await window.api.recycler.getShipments('picked_up');
+        document.getElementById('incoming-count').innerText = incoming.length;
+        renderIncomingList(incoming);
+
+        const received = await window.api.recycler.getShipments('received');
+        document.getElementById('received-count').innerText = received.length;
+        renderProcessingList(received);
+
+        const recycled = await window.api.recycler.getShipments('recycled');
+        renderHistoryList(recycled);
+
+      } catch (err) {
+        console.error('Failed to load recycler dashboard:', err);
+      }
+    }
+
+    function renderIncomingList(list) {
+      const container = document.getElementById('incoming-list');
+      if (list.length === 0) {
+        container.innerHTML = `<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl text-center text-xs text-slate-450 shadow-sm">No incoming cargo shipments dispatched.</div>`;
+        return;
+      }
+
+      container.innerHTML = list.map(item => `
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm space-y-4">
+          <div class="flex justify-between items-start">
+            <div>
+              <div class="font-extrabold text-sm text-slate-850 dark:text-white">${item.wasteCategory}</div>
+              <p class="text-[10px] text-slate-450 mt-0.5 font-medium">ID: ${item._id.slice(-8)}</p>
+            </div>
+            <span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-yellow-50 text-yellow-600 dark:bg-yellow-950/20 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800">
+              DISPATCHED
+            </span>
+          </div>
+
+          <div class="bg-slate-50 dark:bg-slate-850/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800/40 text-xs font-semibold text-slate-600 dark:text-slate-400 space-y-1">
+            <div>Collector: ${item.collectorId?.name || 'Unknown'}</div>
+            <div class="flex items-center space-x-1"><i data-lucide="phone" class="w-3 h-3 text-slate-400"></i> <span>Phone: ${item.collectorId?.phoneNumber || 'N/A'}</span></div>
+          </div>
+
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-extrabold text-slate-700 dark:text-slate-300">${item.estimatedWeight} kg</span>
+            <button onclick="confirmReceived('${item._id}')" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1">
+              <i data-lucide="check-square" class="w-3.5 h-3.5"></i>
+              <span>Confirm Cargo Receipt</span>
+            </button>
+          </div>
+        </div>
+      `).join('');
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function renderProcessingList(list) {
+      const container = document.getElementById('processing-list');
+      if (list.length === 0) {
+        container.innerHTML = `<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl text-center text-xs text-slate-450 shadow-sm">No shipments currently in processing queue.</div>`;
+        return;
+      }
+
+      container.innerHTML = list.map(item => `
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm space-y-4">
+          <div class="flex justify-between items-start">
+            <div>
+              <div class="font-extrabold text-sm text-slate-850 dark:text-white">${item.wasteCategory}</div>
+              <p class="text-[10px] text-slate-450 mt-0.5 font-medium">ID: ${item._id.slice(-8)}</p>
+            </div>
+            <span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-600 dark:bg-purple-950/20 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
+              ARRIVED
+            </span>
+          </div>
+
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-extrabold text-slate-700 dark:text-slate-300">Net Cargo: ${item.estimatedWeight} kg</span>
+            <button onclick="markRecycled('${item._id}')" class="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1">
+              <i data-lucide="recycle" class="w-3.5 h-3.5"></i>
+              <span>Log as Processed & Recycled</span>
+            </button>
+          </div>
+        </div>
+      `).join('');
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function renderHistoryList(list) {
+      const tbody = document.getElementById('history-rows');
+      if (list.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="px-6 py-8 text-center text-xs text-slate-450">No processed shipments found.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = list.map(item => {
+        // Find history recycle date
+        const recycleHist = item.history.find(h => h.status === 'recycled');
+        const formattedDate = recycleHist ? new Date(recycleHist.timestamp).toLocaleDateString() : 'N/A';
+        return `
+          <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-850/50 transition">
+            <td class="px-6 py-4 font-mono text-xs text-slate-450">#${item._id.slice(-8)}</td>
+            <td class="px-6 py-4 font-semibold text-slate-800 dark:text-slate-200 text-xs">${item.wasteCategory}</td>
+            <td class="px-6 py-4 text-xs">${item.estimatedWeight} kg</td>
+            <td class="px-6 py-4 text-xs">${formattedDate}</td>
+            <td class="px-6 py-4 text-xs font-extrabold text-emerald-500">RECYCLED</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function confirmReceived(id) {
+      try {
+        await window.api.recycler.confirmReceipt(id);
+        alert('Shipment receipt confirmed! Added to process queue.');
+        await fetchDashboardData();
+      } catch (err) {
+        alert(err.message || 'Confirmation failed.');
+      }
+    }
+
+    async function markRecycled(id) {
+      try {
+        await window.api.recycler.markRecycled(id);
+        alert('Plastic processed and recycled! Rewards released to citizen.');
+        await fetchDashboardData();
+      } catch (err) {
+        alert(err.message || 'Process failed.');
+      }
+    }
+  </script>
+</body>
+</html>

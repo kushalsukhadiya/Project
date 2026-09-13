@@ -13,6 +13,23 @@ export const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const regRole = urlParams.get('registeredRole');
+    if (regRole) {
+      const savedEmail = localStorage.getItem('registeredEmail');
+      const savedPassword = localStorage.getItem('registeredPassword');
+      if (savedEmail && savedPassword) {
+        setEmail(savedEmail);
+        setPassword(savedPassword);
+        // Clear temporary local storage keys
+        localStorage.removeItem('registeredEmail');
+        localStorage.removeItem('registeredPassword');
+        localStorage.removeItem('registeredRole');
+      }
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
